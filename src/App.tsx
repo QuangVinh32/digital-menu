@@ -585,7 +585,7 @@ function App() {
             if (event.target === event.currentTarget) setReceiptOpen(false)
           }}
         >
-          <div className="receipt-sheet">
+          <div style={{borderRadius:"0"}} className="receipt-sheet">
             <header className="receipt-header">
               <h1>{language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà'}</h1>
               <p>{messages.receiptTitle}</p>
