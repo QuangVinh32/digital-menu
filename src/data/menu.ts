@@ -17,6 +17,7 @@ export const menuItems: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=85',
     categoryId: 'mon-chinh',
     available: true,
+    discountPercent: 15,
     tags: ['Bán chạy'],
     popular: true,
     details: {
@@ -69,6 +70,7 @@ export const menuItems: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=85',
     categoryId: 'mon-nhe',
     available: true,
+    discountPercent: 10,
     tags: ['Tươi mới'],
     details: {
       ingredients: ['Tôm tươi', 'Thịt heo', 'Bánh tráng', 'Bún', 'Rau thơm', 'Sốt đậu phộng'],
@@ -102,6 +104,7 @@ export const menuItems: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=900&q=85',
     categoryId: 'do-uong',
     available: true,
+    discountPercent: 20,
     tags: ['Được yêu thích'],
     details: {
       ingredients: ['Trà lài', 'Đào ngâm', 'Cam tươi', 'Sả', 'Đường mía'],

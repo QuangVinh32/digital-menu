@@ -11,6 +11,7 @@ export type MenuItem = {
   image: string
   categoryId: string
   available: boolean
+  discountPercent?: number
   tags?: string[]
   popular?: boolean
   details?: {

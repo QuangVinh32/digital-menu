@@ -1,5 +1,6 @@
 import type { MenuItem } from '../../types/menu'
 import { Button } from '../../components/ui/Button'
+import { getProductPrice } from '../../utils/menu'
 
 type ProductCardProps = {
   item: MenuItem
@@ -9,11 +10,14 @@ type ProductCardProps = {
 }
 
 export function ProductCard({ item, onAdd, onDetails, inCart }: ProductCardProps) {
+  const finalPrice = getProductPrice(item)
+
   return (
     <article className="product-card">
       <div className="product-image-wrap">
         <img className="product-image" src={item.image} alt={item.name} loading="lazy" />
         {item.tags?.[0] && <span className={`product-tag${item.popular ? ' product-tag--popular' : ''}`}>{item.tags[0]}</span>}
+        {item.discountPercent && <span className="discount-badge">-{item.discountPercent}%</span>}
         <button
           className={`favorite-button${item.popular ? ' is-favorite' : ''}`}
           type="button"
@@ -26,7 +30,12 @@ export function ProductCard({ item, onAdd, onDetails, inCart }: ProductCardProps
       <div className="product-content">
         <div className="product-title-row">
           <h3>{item.name}</h3>
-          <strong className="product-price">{new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong>
+          <div className="product-price-group">
+            {item.discountPercent && <del>{new Intl.NumberFormat('vi-VN').format(item.price)}đ</del>}
+            <strong className={`product-price${item.discountPercent ? ' product-price--discount' : ''}`}>
+              {new Intl.NumberFormat('vi-VN').format(finalPrice)}đ
+            </strong>
+          </div>
         </div>
         <p className="product-description">{item.description}</p>
         <button className="details-link" type="button" onClick={() => onDetails(item)}>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { MenuItem } from '../../types/menu'
 import { Button } from '../../components/ui/Button'
+import { getProductPrice } from '../../utils/menu'
 
 type ProductDetailModalProps = {
   item: MenuItem
@@ -11,6 +12,7 @@ type ProductDetailModalProps = {
 export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1)
   const details = item.details
+  const finalPrice = getProductPrice(item)
 
   return (
     <div
@@ -36,7 +38,12 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
           <p className="eyebrow">BẾP NHÀ GỢI Ý</p>
           <div className="product-modal-title-row">
             <h2 id="product-modal-title">{item.name}</h2>
-            <strong>{new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong>
+            <div className="product-modal-price">
+              {item.discountPercent && <><span className="discount-inline">-{item.discountPercent}%</span><del>{new Intl.NumberFormat('vi-VN').format(item.price)}đ</del></>}
+              <strong className={item.discountPercent ? 'product-price--discount' : ''}>
+                {new Intl.NumberFormat('vi-VN').format(finalPrice)}đ
+              </strong>
+            </div>
           </div>
           <p className="product-modal-description">{details?.note ?? item.description}</p>
 
@@ -78,7 +85,7 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
                 onClose()
               }}
             >
-              Thêm vào giỏ · {new Intl.NumberFormat('vi-VN').format(item.price * quantity)}đ
+              Thêm vào giỏ · {new Intl.NumberFormat('vi-VN').format(finalPrice * quantity)}đ
             </Button>
           </div>
         </div>

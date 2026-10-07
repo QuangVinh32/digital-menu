@@ -5,6 +5,7 @@ import { Button } from './components/ui/Button'
 import { Input } from './components/ui/Input'
 import { ProductCard } from './features/menu/ProductCard'
 import { ProductDetailModal } from './features/menu/ProductDetailModal'
+import { getProductPrice } from './utils/menu'
 
 type CartItem = {
   item: MenuItem
@@ -76,7 +77,7 @@ function App() {
   }, [activeCategory, search])
 
   const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
-  const subtotal = cart.reduce((sum, entry) => sum + entry.item.price * entry.quantity, 0)
+  const subtotal = cart.reduce((sum, entry) => sum + getProductPrice(entry.item) * entry.quantity, 0)
 
   useEffect(() => {
     if (!selectedProduct) return
@@ -144,7 +145,10 @@ function App() {
                 <img src={item.image} alt="" />
                 <div className="cart-item-info">
                   <h3>{item.name}</h3>
-                  <p>{formatPrice(item.price)}</p>
+                  <p className="cart-item-price">
+                    {item.discountPercent && <del>{formatPrice(item.price)}</del>}
+                    <strong>{formatPrice(getProductPrice(item))}</strong>
+                  </p>
                   <div className="quantity-control" aria-label={`Số lượng ${item.name}`}>
                     <button type="button" aria-label={`Giảm ${item.name}`} onClick={() => changeQuantity(item.id, -1)}>
                       <Icon name="minus" size={15} />
@@ -155,7 +159,7 @@ function App() {
                     </button>
                   </div>
                 </div>
-                <strong className="cart-line-total">{formatPrice(item.price * quantity)}</strong>
+                <strong className="cart-line-total">{formatPrice(getProductPrice(item) * quantity)}</strong>
               </div>
             ))}
           </div>
