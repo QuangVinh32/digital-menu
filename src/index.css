@@ -586,12 +586,16 @@ select:focus-visible {
   position: absolute;
   top: 10px;
   left: 10px;
+  max-width: calc(100% - 52px);
   padding: 5px 8px;
+  overflow: hidden;
   color: #49583a;
   background: #f2f3e8;
   border-radius: 6px;
   font-size: 9px;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-tag--popular {
@@ -1483,6 +1487,12 @@ select:focus-visible {
   .product-modal-image-wrap {
     min-height: 0;
     height: 210px;
+  }
+
+  .product-tag.product-modal-tag {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
   }
 
   .product-modal-content {
