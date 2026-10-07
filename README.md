@@ -17,6 +17,10 @@ npm install
 npm run dev
 ```
 
+## Languages
+
+The menu interface is available in Vietnamese, English, and Japanese. Use the language selector in the header; Vietnamese is selected by default.
+
 ## Production build
 
 ```bash

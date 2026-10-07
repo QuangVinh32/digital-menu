@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { MenuCategory, MenuItem, ProductSize } from './types/menu'
+import type { MenuItem, ProductSize } from './types/menu'
 import { categories, menuItems } from './data/menu'
 import { Button } from './components/ui/Button'
 import { Input } from './components/ui/Input'
 import { ProductCard } from './features/menu/ProductCard'
 import { ProductDetailModal } from './features/menu/ProductDetailModal'
 import { getProductPrice } from './utils/menu'
+import { formatMessage, formatPrice, translations, type Language } from './i18n'
+import { localizeMenuItem } from './utils/localization'
 
 type CartItem = {
   item: MenuItem
@@ -61,6 +63,7 @@ function Icon({
 }
 
 function App() {
+  const [language, setLanguage] = useState<Language>('vi')
   const [activeCategory, setActiveCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
@@ -68,25 +71,46 @@ function App() {
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null)
+  const messages = translations[language]
+  const locale = language === 'ja' ? 'ja-JP' : language === 'en' ? 'en-US' : 'vi-VN'
+  const localizedItems = useMemo(
+    () => menuItems.map((item) => localizeMenuItem(item, language)),
+    [language],
+  )
+  const localizedCategories = categories.map((category) => ({
+    ...category,
+    name: {
+      all: messages.categoryAll,
+      'mon-chinh': messages.categoryMain,
+      'mon-nhe': messages.categorySnack,
+      'do-uong': messages.categoryDrink,
+      'trang-mieng': messages.categoryDessert,
+    }[category.id] ?? category.name,
+  }))
 
   const filteredItems = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase('vi')
-    return menuItems.filter((item) => {
+    const query = search.trim().toLocaleLowerCase(locale)
+    return localizedItems.filter((item) => {
       const matchesCategory = activeCategory === 'all' || item.categoryId === activeCategory
       const matchesSearch =
         !query ||
-        item.name.toLocaleLowerCase('vi').includes(query) ||
-        item.description.toLocaleLowerCase('vi').includes(query)
+        item.name.toLocaleLowerCase(locale).includes(query) ||
+        item.description.toLocaleLowerCase(locale).includes(query)
       return matchesCategory && matchesSearch && item.available
     })
-  }, [activeCategory, search])
+  }, [activeCategory, localizedItems, locale, search])
 
   const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
   const subtotal = cart.reduce((sum, entry) => sum + getProductPrice(entry.item, entry.size) * entry.quantity, 0)
-  const orderDate = new Intl.DateTimeFormat('vi-VN', {
+  const orderDate = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date())
+
+  useEffect(() => {
+    document.documentElement.lang = language
+    document.title = `Bếp Nhà | ${messages.menuTitle}`
+  }, [language, messages.menuTitle])
 
   useEffect(() => {
     if (!selectedProduct && !receiptOpen) return
@@ -103,8 +127,10 @@ function App() {
   }, [selectedProduct, receiptOpen])
 
   function addToCart(item: MenuItem, size: ProductSize | null = null, quantity = 1) {
+    const canonicalItem = menuItems.find((menuItem) => menuItem.id === item.id) ?? item
+    const canonicalSize = canonicalItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
     setCart((current) => {
-      const itemKey = getCartItemKey(item, size)
+      const itemKey = getCartItemKey(canonicalItem, canonicalSize)
       const existing = current.find((entry) => getCartItemKey(entry.item, entry.size) === itemKey)
       if (existing) {
         return current.map((entry) =>
@@ -113,16 +139,21 @@ function App() {
             : entry,
         )
       }
-      return [...current, { item, size, quantity }]
+      return [...current, { item: canonicalItem, size: canonicalSize, quantity }]
     })
   }
 
   function handleAddClick(item: MenuItem) {
-    if (item.sizes?.length) {
-      setSelectedProduct(item)
+    const canonicalItem = menuItems.find((menuItem) => menuItem.id === item.id) ?? item
+    if (canonicalItem.sizes?.length) {
+      setSelectedProduct(canonicalItem)
       return
     }
-    addToCart(item)
+    addToCart(canonicalItem)
+  }
+
+  function handleDetails(item: MenuItem) {
+    setSelectedProduct(menuItems.find((menuItem) => menuItem.id === item.id) ?? item)
   }
 
   function changeQuantity(item: MenuItem, size: ProductSize | null, amount: number) {
@@ -159,16 +190,16 @@ function App() {
   }
 
   const cartPanel = (
-    <aside className={`cart-panel${mobileCartOpen ? ' cart-panel--open' : ''}`} aria-label="Giỏ hàng">
+    <aside className={`cart-panel${mobileCartOpen ? ' cart-panel--open' : ''}`} aria-label={messages.cartTitle}>
       <div className="cart-heading">
         <div>
-          <p className="eyebrow">ĐƠN CỦA BẠN</p>
-          <h2>Giỏ hàng <span className="cart-count">{cartCount}</span></h2>
+          <p className="eyebrow">{messages.cartHeading}</p>
+          <h2>{messages.cartTitle} <span className="cart-count">{cartCount}</span></h2>
         </div>
         <button
           className="icon-button cart-close"
           type="button"
-          aria-label="Đóng giỏ hàng"
+          aria-label={messages.closeCart}
           onClick={() => setMobileCartOpen(false)}
         >
           <Icon name="close" />
@@ -178,48 +209,52 @@ function App() {
       {cart.length === 0 ? (
         <div className="empty-cart">
           <div className="empty-cart-icon"><Icon name="cart" size={26} /></div>
-          <h3>Chưa có món nào</h3>
-          <p>Chọn món bạn yêu thích và thêm vào giỏ nhé.</p>
-          <Button variant="secondary" onClick={() => setMobileCartOpen(false)}>Khám phá thực đơn</Button>
+          <h3>{messages.emptyCartTitle}</h3>
+          <p>{messages.emptyCartDescription}</p>
+          <Button variant="secondary" onClick={() => setMobileCartOpen(false)}>{messages.browseMenu}</Button>
         </div>
       ) : (
         <>
           <div className="cart-items">
-            {cart.map(({ item, size, quantity }) => (
-              <div className="cart-item" key={getCartItemKey(item, size)}>
-                <img src={item.image} alt="" />
-                <div className="cart-item-info">
-                  <h3>{item.name}</h3>
-                  {size && <p className="cart-item-size">{size.name}</p>}
-                  <p className="cart-item-price">
-                    {item.discountPercent && <del>{formatPrice(size?.price ?? item.price)}</del>}
-                    <strong>{formatPrice(getProductPrice(item, size))}</strong>
-                  </p>
-                  <div className="quantity-control" aria-label={`Số lượng ${item.name}`}>
-                    <button type="button" aria-label={`Giảm ${item.name} ${size?.name ?? ''}`} onClick={() => changeQuantity(item, size, -1)}>
-                      <Icon name="minus" size={15} />
-                    </button>
-                    <span>{quantity}</span>
-                    <button type="button" aria-label={`Tăng ${item.name} ${size?.name ?? ''}`} onClick={() => changeQuantity(item, size, 1)}>
-                      <Icon name="plus" size={15} />
-                    </button>
+            {cart.map(({ item, size, quantity }) => {
+              const localizedItem = localizeMenuItem(item, language)
+              const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
+              return (
+                <div className="cart-item" key={getCartItemKey(item, size)}>
+                  <img src={item.image} alt="" />
+                  <div className="cart-item-info">
+                    <h3>{localizedItem.name}</h3>
+                    {localizedSize && <p className="cart-item-size">{localizedSize.name}</p>}
+                    <p className="cart-item-price">
+                      {item.discountPercent && <del>{formatPrice(size?.price ?? item.price, language)}</del>}
+                      <strong>{formatPrice(getProductPrice(item, size), language)}</strong>
+                    </p>
+                    <div className="quantity-control" aria-label={formatMessage(messages.quantityOf, { name: localizedItem.name })}>
+                      <button type="button" aria-label={formatMessage(messages.decrease, { name: localizedItem.name })} onClick={() => changeQuantity(item, size, -1)}>
+                        <Icon name="minus" size={15} />
+                      </button>
+                      <span>{quantity}</span>
+                      <button type="button" aria-label={formatMessage(messages.increase, { name: localizedItem.name })} onClick={() => changeQuantity(item, size, 1)}>
+                        <Icon name="plus" size={15} />
+                      </button>
+                    </div>
                   </div>
+                  <strong className="cart-line-total">{formatPrice(getProductPrice(item, size) * quantity, language)}</strong>
                 </div>
-                <strong className="cart-line-total">{formatPrice(getProductPrice(item, size) * quantity)}</strong>
-              </div>
-            ))}
+              )
+            })}
           </div>
           <div className="cart-summary">
-            <div className="summary-line"><span>Tạm tính</span><strong>{formatPrice(subtotal)}</strong></div>
-            <div className="summary-line"><span>Phí phục vụ</span><strong>Miễn phí</strong></div>
-            <div className="summary-total"><span>Tổng cộng</span><strong>{formatPrice(subtotal)}</strong></div>
+            <div className="summary-line"><span>{messages.subtotal}</span><strong>{formatPrice(subtotal, language)}</strong></div>
+            <div className="summary-line"><span>{messages.serviceFee}</span><strong>{messages.free}</strong></div>
+            <div className="summary-total"><span>{messages.total}</span><strong>{formatPrice(subtotal, language)}</strong></div>
             <Button
               className="checkout-button"
               onClick={placeOrder}
             >
-              Đặt món <Icon name="arrow" size={18} />
+              {messages.placeOrder} <Icon name="arrow" size={18} />
             </Button>
-            <p className="cart-note">Thanh toán tại quầy sau khi xác nhận món</p>
+            <p className="cart-note">{messages.cartNote}</p>
           </div>
         </>
       )}
@@ -231,16 +266,37 @@ function App() {
       <div className="site-layout">
         <div className="main-column">
           <header className="topbar">
-            <a className="brand" href="#" aria-label="Bếp Nhà - trang chủ">
+            <a className="brand" href="#" aria-label={messages.homeLabel}>
               <span className="brand-mark"><Icon name="leaf" size={22} /></span>
-              <span className="brand-name">bếp<span>nhà</span><small>FRESH & LOCAL</small></span>
+              <span className="brand-name">
+                {language === 'ja' ? 'ベップ' : language === 'en' ? 'bep' : 'bếp'}
+                <span>{language === 'ja' ? 'ニャー' : language === 'en' ? 'nha' : 'nhà'}</span>
+                <small>{language === 'ja' ? '新鮮で地元の食材' : language === 'en' ? 'FRESH & LOCAL' : 'FRESH & LOCAL'}</small>
+              </span>
             </a>
             <div className="topbar-actions">
-              <div className="open-status"><span className="status-dot" /> Đang mở cửa</div>
+              <div className="open-status"><span className="status-dot" /> {messages.openStatus}</div>
+              <label className="language-picker">
+                <span className="sr-only">{messages.languageLabel}</span>
+                <select
+                  value={language}
+                  aria-label={messages.languageLabel}
+                  onChange={(event) => {
+                    const nextLanguage = event.target.value
+                    if (nextLanguage === 'vi' || nextLanguage === 'en' || nextLanguage === 'ja') {
+                      setLanguage(nextLanguage)
+                    }
+                  }}
+                >
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">English</option>
+                  <option value="ja">日本語</option>
+                </select>
+              </label>
               <button
                 className="icon-button theme-toggle"
                 type="button"
-                aria-label={isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+                aria-label={isDark ? messages.switchToLight : messages.switchToDark}
                 onClick={() => setIsDark((value) => !value)}
               >
                 <Icon name={isDark ? 'sun' : 'moon'} />
@@ -248,7 +304,7 @@ function App() {
               <button
                 className="mobile-cart-button"
                 type="button"
-                aria-label={`Mở giỏ hàng, có ${cartCount} món`}
+                aria-label={formatMessage(messages.openCart, { count: cartCount })}
                 onClick={() => setMobileCartOpen(true)}
               >
                 <Icon name="cart" size={19} />
@@ -260,32 +316,32 @@ function App() {
           <main>
             <section className="hero">
               <div className="hero-content">
-                <span className="hero-kicker"><span /> BỮA NGON, VỊ NHÀ</span>
-                <h1>Thân quen như<br />bữa cơm <em>nhà.</em></h1>
-                <p>Món ngon nấu mỗi ngày, từ nguyên liệu tươi lành và chút yêu thương.</p>
+                <span className="hero-kicker"><span /> {messages.heroKicker}</span>
+                <h1>{messages.heroTitleStart}<br />{messages.heroTitleEnd} <em>{messages.heroTitleEmphasis}</em></h1>
+                <p>{messages.heroDescription}</p>
                 <div className="hero-details">
                   <span><Icon name="clock" size={16} /> 08:00 – 21:30</span>
                   <span className="detail-divider" />
-                  <span><Icon name="leaf" size={16} /> Nguyên liệu tươi</span>
+                  <span><Icon name="leaf" size={16} /> {messages.freshIngredients}</span>
                 </div>
               </div>
               <div className="hero-decoration" aria-hidden="true">
-                <span className="hero-stamp">NẤU MỖI NGÀY<br /><b>♡</b></span>
+                <span className="hero-stamp">{messages.heroStamp}<br /><b>♡</b></span>
               </div>
             </section>
 
             <section className="menu-section" aria-labelledby="menu-title">
               <div className="section-heading">
                 <div>
-                  <p className="eyebrow">BẾP NHÀ GỢI Ý</p>
-                  <h2 id="menu-title">Thực đơn hôm nay</h2>
+                  <p className="eyebrow">{messages.menuEyebrow}</p>
+                  <h2 id="menu-title">{messages.menuTitle}</h2>
                 </div>
-                <span className="menu-count">{filteredItems.length} món ngon</span>
+                <span className="menu-count">{filteredItems.length} {messages.menuCount}</span>
               </div>
 
               <div className="menu-controls">
-                <div className="category-list" role="group" aria-label="Lọc theo danh mục">
-                  {categories.map((category: MenuCategory) => (
+                <div className="category-list" role="group" aria-label={messages.categoryFilter}>
+                  {localizedCategories.map((category) => (
                     <button
                       className={`category-button${activeCategory === category.id ? ' is-active' : ''}`}
                       type="button"
@@ -302,11 +358,11 @@ function App() {
                   <Input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Tìm món ăn..."
-                    aria-label="Tìm món ăn"
+                    placeholder={messages.searchPlaceholder}
+                    aria-label={messages.searchLabel}
                   />
                   {search && (
-                    <button type="button" aria-label="Xóa nội dung tìm kiếm" onClick={() => setSearch('')}>
+                    <button type="button" aria-label={messages.clearSearch} onClick={() => setSearch('')}>
                       <Icon name="close" size={16} />
                     </button>
                   )}
@@ -319,8 +375,10 @@ function App() {
                     <ProductCard
                       item={item}
                       key={item.id}
+                      language={language}
+                      messages={messages}
                       onAdd={handleAddClick}
-                      onDetails={setSelectedProduct}
+                      onDetails={handleDetails}
                       inCart={cart.some((entry) => entry.item.id === item.id)}
                     />
                   ))}
@@ -328,10 +386,10 @@ function App() {
               ) : (
                 <div className="no-results">
                   <span>🍲</span>
-                  <h3>Chưa tìm thấy món phù hợp</h3>
-                  <p>Thử tìm với tên món khác hoặc chọn danh mục khác nhé.</p>
+                  <h3>{messages.noResultsTitle}</h3>
+                  <p>{messages.noResultsDescription}</p>
                   <Button variant="secondary" onClick={() => { setSearch(''); setActiveCategory('all') }}>
-                    Xem tất cả món
+                    {messages.showAll}
                   </Button>
                 </div>
               )}
@@ -339,26 +397,28 @@ function App() {
 
             <footer className="site-footer">
               <div className="footer-contact">
-                <strong>Liên hệ chủ quán · Lê Quang Vinh</strong>
+                <strong>{messages.footerContact}</strong>
                 <a href="https://zalo.me/0357700838" target="_blank" rel="noreferrer">
-                  Zalo: 0357 700 838
+                  {messages.footerZalo}
                 </a>
-                <address>Địa chỉ: xã Quỳnh Phú, tỉnh Nghệ An</address>
+                <address>{messages.footerAddress}</address>
               </div>
               <div className="footer-note">
-                <span>© 2026 Bếp Nhà Quang Vinh · Nấu bằng cả tấm lòng</span>
-                <span><Icon name="leaf" size={14} /> Tươi ngon mỗi ngày</span>
+                <span>{messages.footerCopyright}</span>
+                <span><Icon name="leaf" size={14} /> {messages.footerFresh}</span>
               </div>
             </footer>
           </main>
         </div>
         {cartPanel}
       </div>
-      {mobileCartOpen && <button className="cart-backdrop" aria-label="Đóng giỏ hàng" onClick={() => setMobileCartOpen(false)} />}
+      {mobileCartOpen && <button className="cart-backdrop" aria-label={messages.closeCart} onClick={() => setMobileCartOpen(false)} />}
       {selectedProduct && (
         <ProductDetailModal
           key={selectedProduct.id}
-          item={selectedProduct}
+          item={localizeMenuItem(selectedProduct, language)}
+          language={language}
+          messages={messages}
           onClose={() => setSelectedProduct(null)}
           onAdd={addToCart}
         />
@@ -368,69 +428,69 @@ function App() {
           className="print-receipt is-open"
           role="dialog"
           aria-modal="true"
-          aria-label="Hoá đơn đặt món"
+          aria-label={messages.receiptLabel}
           onClick={(event) => {
             if (event.target === event.currentTarget) setReceiptOpen(false)
           }}
         >
           <div className="receipt-sheet">
             <header className="print-receipt-header">
-              <h1>Bếp Nhà</h1>
-              <p>Phiếu đặt món</p>
+              <h1>{language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà'}</h1>
+              <p>{messages.receiptTitle}</p>
               <time>{orderDate}</time>
             </header>
             <table>
               <thead>
                 <tr>
-                  <th>Tên món</th>
-                  <th>Số lượng</th>
-                  <th>Đơn giá</th>
-                  <th>Thành tiền</th>
+                  <th>{messages.itemName}</th>
+                  <th>{messages.quantity}</th>
+                  <th>{messages.unitPrice}</th>
+                  <th>{messages.lineTotal}</th>
                 </tr>
               </thead>
               <tbody>
-                {cart.map(({ item, size, quantity }) => (
-                  <tr key={getCartItemKey(item, size)}>
-                    <td>
-                      {item.name}
-                      {size && <small className="print-item-size">{size.name}</small>}
-                    </td>
-                    <td data-label="Số lượng">{quantity}</td>
-                    <td data-label="Đơn giá">{formatPrice(getProductPrice(item, size))}</td>
-                    <td data-label="Thành tiền">{formatPrice(getProductPrice(item, size) * quantity)}</td>
-                  </tr>
-                ))}
+                {cart.map(({ item, size, quantity }) => {
+                  const localizedItem = localizeMenuItem(item, language)
+                  const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
+                  return (
+                    <tr key={getCartItemKey(item, size)}>
+                      <td>
+                        {localizedItem.name}
+                        {localizedSize && <small className="print-item-size">{localizedSize.name}</small>}
+                      </td>
+                      <td data-label={messages.quantity}>{quantity}</td>
+                      <td data-label={messages.unitPrice}>{formatPrice(getProductPrice(item, size), language)}</td>
+                      <td data-label={messages.lineTotal}>{formatPrice(getProductPrice(item, size) * quantity, language)}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
-            <p className="print-receipt-total"><span>Tổng cộng</span><strong>{formatPrice(subtotal)}</strong></p>
-            <p className="receipt-hint">Chụp màn hình bill này rồi gửi cho chủ quán qua Zalo nhé.</p>
-            <section className="receipt-payment" aria-label="Thông tin thanh toán và liên hệ">
+            <p className="print-receipt-total"><span>{messages.total}</span><strong>{formatPrice(subtotal, language)}</strong></p>
+            <p className="receipt-hint">{messages.screenshotHint}</p>
+            <section className="receipt-payment" aria-label={messages.paymentTitle}>
               <div>
-                <h2>Thanh toán qua VietQR</h2>
-                <p>Quét mã để thanh toán đơn hàng</p>
+                <h2>{messages.paymentTitle}</h2>
+                <p>{messages.scanToPay}</p>
                 <div className="receipt-contact">
-                  <strong>Chủ quán: Lê Quang Vinh</strong>
-                  <address>Địa chỉ: xã Quỳnh Phú, tỉnh Nghệ An</address>
+                  <strong>{messages.ownerName}</strong>
+                  <address>{messages.ownerAddress}</address>
                 </div>
                 <a href="https://zalo.me/0357700838" target="_blank" rel="noreferrer">
-                  Zalo: 0357 700 838
+                  {messages.zalo}
                 </a>
               </div>
-              <img src="/payment-qr.png" alt="Mã QR thanh toán VietQR của chủ quán" />
+              <img src="/payment-qr.png" alt={messages.qrAlt} />
             </section>
             <div className="receipt-actions">
-              <Button onClick={printOrder}>Lưu / in PDF</Button>
-              <Button variant="secondary" onClick={() => setReceiptOpen(false)}>Đóng bill</Button>
+              <Button onClick={printOrder}>{messages.savePdf}</Button>
+              <Button variant="secondary" onClick={() => setReceiptOpen(false)}>{messages.closeReceipt}</Button>
             </div>
           </div>
         </section>
       )}
     </div>
   )
-}
-
-function formatPrice(price: number) {
-  return `${new Intl.NumberFormat('vi-VN').format(price)}đ`
 }
 
 export default App

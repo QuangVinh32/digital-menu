@@ -2,14 +2,17 @@ import { useState } from 'react'
 import type { MenuItem, ProductSize } from '../../types/menu'
 import { Button } from '../../components/ui/Button'
 import { getProductPrice } from '../../utils/menu'
+import { formatMessage, formatPrice, type Language, type Messages } from '../../i18n'
 
 type ProductDetailModalProps = {
   item: MenuItem
+  language: Language
+  messages: Messages
   onClose: () => void
   onAdd: (item: MenuItem, size: ProductSize | null, quantity: number) => void
 }
 
-export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalProps) {
+export function ProductDetailModal({ item, language, messages, onClose, onAdd }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState<ProductSize | null>(item.sizes?.[0] ?? null)
   const details = item.details
@@ -29,7 +32,7 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
         aria-modal="true"
         aria-labelledby="product-modal-title"
       >
-        <button className="product-modal-close" type="button" aria-label="Đóng chi tiết món" onClick={onClose}>
+        <button className="product-modal-close" type="button" aria-label={messages.productDialogClose} onClick={onClose}>
           ×
         </button>
         <div className="product-modal-image-wrap">
@@ -37,13 +40,13 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
           {item.tags?.[0] && <span className="product-tag product-modal-tag">{item.tags[0]}</span>}
         </div>
         <div className="product-modal-content">
-          <p className="eyebrow">BẾP NHÀ GỢI Ý</p>
+          <p className="eyebrow">{messages.menuEyebrow}</p>
           <div className="product-modal-title-row">
             <h2 id="product-modal-title">{item.name}</h2>
             <div className="product-modal-price">
-              {item.discountPercent && <><span className="discount-inline">-{item.discountPercent}%</span><del>{new Intl.NumberFormat('vi-VN').format(originalPrice)}đ</del></>}
+              {item.discountPercent && <><span className="discount-inline">{formatMessage(messages.discount, { percent: item.discountPercent })}</span><del>{formatPrice(originalPrice, language)}</del></>}
               <strong className={item.discountPercent ? 'product-price--discount' : ''}>
-                {new Intl.NumberFormat('vi-VN').format(finalPrice)}đ
+                {formatPrice(finalPrice, language)}
               </strong>
             </div>
           </div>
@@ -51,7 +54,7 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
 
           {item.sizes && item.sizes.length > 0 && (
             <fieldset className="product-size-options">
-              <legend>Chọn size</legend>
+              <legend>{messages.selectSize}</legend>
               <div>
                 {item.sizes.map((size) => (
                   <button
@@ -62,7 +65,7 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
                     onClick={() => setSelectedSize(size)}
                   >
                     <span>{size.name}</span>
-                    <strong>{new Intl.NumberFormat('vi-VN').format(getProductPrice(item, size))}đ</strong>
+                    <strong>{formatPrice(getProductPrice(item, size), language)}</strong>
                   </button>
                 ))}
               </div>
@@ -70,33 +73,33 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
           )}
 
           <div className="product-facts">
-            <div><span>◷</span><strong>{details?.preparationTime ?? 'Đang cập nhật'}</strong><small>Chuẩn bị</small></div>
-            <div><span>♨</span><strong>{details?.calories ? `${details.calories} kcal` : 'Đang cập nhật'}</strong><small>Năng lượng</small></div>
-            <div><span>◎</span><strong>{details?.serving ?? 'Đang cập nhật'}</strong><small>Khẩu phần</small></div>
+            <div><span>◷</span><strong>{details?.preparationTime ?? messages.updating}</strong><small>{messages.preparation}</small></div>
+            <div><span>♨</span><strong>{details?.calories ? `${details.calories} kcal` : messages.updating}</strong><small>{messages.calories}</small></div>
+            <div><span>◎</span><strong>{details?.serving ?? messages.updating}</strong><small>{messages.serving}</small></div>
           </div>
 
           <div className="product-ingredients">
-            <h3>Thành phần</h3>
+            <h3>{messages.ingredients}</h3>
             {details?.ingredients.length ? (
               <ul>
                 {details.ingredients.map((ingredient) => <li key={ingredient}>{ingredient}</li>)}
               </ul>
             ) : (
-              <p>Thông tin thành phần đang được cập nhật.</p>
+              <p>{messages.ingredientUpdating}</p>
             )}
           </div>
 
           <div className="product-modal-footer">
-            <div className="quantity-control modal-quantity" aria-label="Chọn số lượng">
+            <div className="quantity-control modal-quantity" aria-label={messages.chooseQuantity}>
               <button
                 type="button"
-                aria-label="Giảm số lượng"
+                aria-label={messages.decreaseQuantity}
                 onClick={() => setQuantity((current) => Math.max(1, current - 1))}
               >
                 −
               </button>
               <span>{quantity}</span>
-              <button type="button" aria-label="Tăng số lượng" onClick={() => setQuantity((current) => current + 1)}>
+              <button type="button" aria-label={messages.increaseQuantity} onClick={() => setQuantity((current) => current + 1)}>
                 +
               </button>
             </div>
@@ -107,7 +110,7 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
                 onClose()
               }}
             >
-              Thêm vào giỏ · {new Intl.NumberFormat('vi-VN').format(finalPrice * quantity)}đ
+              {formatMessage(messages.addToCartWithPrice, { price: formatPrice(finalPrice * quantity, language) })}
             </Button>
           </div>
         </div>

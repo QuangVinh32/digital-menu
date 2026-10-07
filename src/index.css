@@ -38,8 +38,19 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 button {
@@ -48,7 +59,8 @@ button {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid rgb(116 139 86 / 40%);
   outline-offset: 3px;
 }
@@ -188,6 +200,17 @@ input:focus-visible {
   display: flex;
   align-items: center;
   gap: 22px;
+}
+
+.language-picker select {
+  max-width: 112px;
+  padding: 8px 25px 8px 10px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 11px;
 }
 
 .open-status {
@@ -1441,11 +1464,18 @@ input:focus-visible {
   }
 
   .topbar-actions {
-    gap: 10px;
+    gap: 8px;
   }
 
   .open-status {
-    gap: 6px;
+    gap: 0;
+    overflow: hidden;
+    font-size: 0;
+  }
+
+  .language-picker select {
+    max-width: 91px;
+    padding: 8px 20px 8px 7px;
     font-size: 10px;
   }
 
