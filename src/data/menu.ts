@@ -19,6 +19,13 @@ export const menuItems: MenuItem[] = [
     available: true,
     tags: ['Bán chạy'],
     popular: true,
+    details: {
+      ingredients: ['Sườn heo', 'Mật ong', 'Cơm tấm', 'Đồ chua', 'Mỡ hành'],
+      preparationTime: '20–25 phút',
+      calories: 620,
+      serving: '1 người',
+      note: 'Sườn được ướp qua đêm để thấm vị, nướng mới khi khách gọi món.',
+    },
   },
   {
     id: 'pho-bo',
@@ -30,6 +37,13 @@ export const menuItems: MenuItem[] = [
     available: true,
     tags: ['Đặc trưng'],
     popular: true,
+    details: {
+      ingredients: ['Thịt bò', 'Bánh phở tươi', 'Xương bò', 'Hành lá', 'Rau thơm'],
+      preparationTime: '15–20 phút',
+      calories: 480,
+      serving: '1 tô',
+      note: 'Nước dùng được ninh chậm từ xương bò và gia vị tự nhiên trong 12 tiếng.',
+    },
   },
   {
     id: 'bun-cha-ha-noi',
@@ -39,6 +53,13 @@ export const menuItems: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=900&q=85',
     categoryId: 'mon-chinh',
     available: true,
+    details: {
+      ingredients: ['Thịt heo nướng', 'Bún tươi', 'Rau sống', 'Nước mắm chua ngọt'],
+      preparationTime: '15 phút',
+      calories: 530,
+      serving: '1 phần',
+      note: 'Thịt được nướng than hoa, dùng kèm nước chấm pha theo công thức của Bếp Nhà.',
+    },
   },
   {
     id: 'goi-cuon',
@@ -49,6 +70,13 @@ export const menuItems: MenuItem[] = [
     categoryId: 'mon-nhe',
     available: true,
     tags: ['Tươi mới'],
+    details: {
+      ingredients: ['Tôm tươi', 'Thịt heo', 'Bánh tráng', 'Bún', 'Rau thơm', 'Sốt đậu phộng'],
+      preparationTime: '10 phút',
+      calories: 290,
+      serving: '3 cuốn',
+      note: 'Cuốn trong ngày với rau xanh tươi, sốt đậu phộng được phục vụ riêng.',
+    },
   },
   {
     id: 'banh-mi-ga',
@@ -58,6 +86,13 @@ export const menuItems: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?auto=format&fit=crop&w=900&q=85',
     categoryId: 'mon-nhe',
     available: true,
+    details: {
+      ingredients: ['Bánh mì', 'Ức gà xé', 'Dưa leo', 'Rau thơm', 'Sốt nhà làm'],
+      preparationTime: '8 phút',
+      calories: 370,
+      serving: '1 ổ',
+      note: 'Bánh được làm nóng giòn trước khi phục vụ.',
+    },
   },
   {
     id: 'tra-dao-cam-sa',
@@ -68,6 +103,13 @@ export const menuItems: MenuItem[] = [
     categoryId: 'do-uong',
     available: true,
     tags: ['Được yêu thích'],
+    details: {
+      ingredients: ['Trà lài', 'Đào ngâm', 'Cam tươi', 'Sả', 'Đường mía'],
+      preparationTime: '5 phút',
+      calories: 160,
+      serving: '500 ml',
+      note: 'Có thể điều chỉnh lượng đường và đá theo sở thích khi gọi món.',
+    },
   },
   {
     id: 'ca-phe-sua',
@@ -77,6 +119,13 @@ export const menuItems: MenuItem[] = [
     image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=85',
     categoryId: 'do-uong',
     available: true,
+    details: {
+      ingredients: ['Cà phê rang xay', 'Sữa đặc', 'Đá viên'],
+      preparationTime: '5 phút',
+      calories: 180,
+      serving: '350 ml',
+      note: 'Cà phê được pha phin, có thể chọn uống nóng hoặc thêm đá.',
+    },
   },
   {
     id: 'che-khuc-bach',
@@ -87,5 +136,12 @@ export const menuItems: MenuItem[] = [
     categoryId: 'trang-mieng',
     available: true,
     tags: ['Mát lạnh'],
+    details: {
+      ingredients: ['Khúc bạch hạnh nhân', 'Vải', 'Nhãn', 'Hạnh nhân lát', 'Nước đường'],
+      preparationTime: '5 phút',
+      calories: 240,
+      serving: '1 chén',
+      note: 'Trái cây dùng kèm có thể thay đổi theo mùa.',
+    },
   },
 ]

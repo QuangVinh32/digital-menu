@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { MenuCategory, MenuItem } from './types/menu'
 import { categories, menuItems } from './data/menu'
 import { Button } from './components/ui/Button'
 import { Input } from './components/ui/Input'
 import { ProductCard } from './features/menu/ProductCard'
+import { ProductDetailModal } from './features/menu/ProductDetailModal'
 
 type CartItem = {
   item: MenuItem
@@ -60,6 +61,7 @@ function App() {
   const [isDark, setIsDark] = useState(false)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [orderMessage, setOrderMessage] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null)
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('vi')
@@ -76,15 +78,26 @@ function App() {
   const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
   const subtotal = cart.reduce((sum, entry) => sum + entry.item.price * entry.quantity, 0)
 
-  function addToCart(item: MenuItem) {
+  useEffect(() => {
+    if (!selectedProduct) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setSelectedProduct(null)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedProduct])
+
+  function addToCart(item: MenuItem, quantity = 1) {
     setCart((current) => {
       const existing = current.find((entry) => entry.item.id === item.id)
       if (existing) {
         return current.map((entry) =>
-          entry.item.id === item.id ? { ...entry, quantity: entry.quantity + 1 } : entry,
+          entry.item.id === item.id ? { ...entry, quantity: entry.quantity + quantity } : entry,
         )
       }
-      return [...current, { item, quantity: 1 }]
+      return [...current, { item, quantity }]
     })
     setOrderMessage('')
   }
@@ -258,6 +271,7 @@ function App() {
                       item={item}
                       key={item.id}
                       onAdd={addToCart}
+                      onDetails={setSelectedProduct}
                       inCart={cart.some((entry) => entry.item.id === item.id)}
                     />
                   ))}
@@ -283,6 +297,13 @@ function App() {
         {cartPanel}
       </div>
       {mobileCartOpen && <button className="cart-backdrop" aria-label="Đóng giỏ hàng" onClick={() => setMobileCartOpen(false)} />}
+      {selectedProduct && (
+        <ProductDetailModal
+          item={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAdd={addToCart}
+        />
+      )}
     </div>
   )
 }

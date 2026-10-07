@@ -13,4 +13,11 @@ export type MenuItem = {
   available: boolean
   tags?: string[]
   popular?: boolean
+  details?: {
+    ingredients: string[]
+    preparationTime: string
+    calories: number
+    serving: string
+    note?: string
+  }
 }

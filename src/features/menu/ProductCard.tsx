@@ -4,10 +4,11 @@ import { Button } from '../../components/ui/Button'
 type ProductCardProps = {
   item: MenuItem
   onAdd: (item: MenuItem) => void
+  onDetails: (item: MenuItem) => void
   inCart: boolean
 }
 
-export function ProductCard({ item, onAdd, inCart }: ProductCardProps) {
+export function ProductCard({ item, onAdd, onDetails, inCart }: ProductCardProps) {
   return (
     <article className="product-card">
       <div className="product-image-wrap">
@@ -28,6 +29,9 @@ export function ProductCard({ item, onAdd, inCart }: ProductCardProps) {
           <strong className="product-price">{new Intl.NumberFormat('vi-VN').format(item.price)}đ</strong>
         </div>
         <p className="product-description">{item.description}</p>
+        <button className="details-link" type="button" onClick={() => onDetails(item)}>
+          Xem chi tiết <span aria-hidden="true">→</span>
+        </button>
         <Button
           className={`add-button${inCart ? ' add-button--added' : ''}`}
           variant={inCart ? 'secondary' : 'ghost'}
