@@ -281,34 +281,26 @@ function App() {
   }
 
   async function exportOrderPdfFromDocx() {
-    const printFrame = document.createElement('iframe')
-    printFrame.title = messages.exportPdfFromDocx
-    printFrame.style.position = 'fixed'
-    printFrame.style.left = '-10000px'
-    printFrame.style.width = '80mm'
-    printFrame.style.height = '150mm'
-    printFrame.style.border = '0'
-    document.body.append(printFrame)
-    const printWindow = printFrame.contentWindow
-    if (!printWindow) {
-      printFrame.remove()
-      setDocxError(messages.docxExportError)
-      return
-    }
-
     setDocxBusy(true)
     setDocxError(null)
     try {
-      const { printOrderDocumentAsPdf } = await import('./utils/order-document')
+      const { createOrderPdf } = await import('./utils/order-document')
       const date = new Date()
       const fileDate = [
         date.getFullYear(),
         String(date.getMonth() + 1).padStart(2, '0'),
         String(date.getDate()).padStart(2, '0'),
       ].join('-')
-      await printOrderDocumentAsPdf(getOrderDocumentData(), printWindow, `don-hang-${fileDate}`)
+      const pdf = await createOrderPdf(getOrderDocumentData())
+      const downloadUrl = URL.createObjectURL(pdf)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = `don-hang-${fileDate}.pdf`
+      document.body.append(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60_000)
     } catch (error) {
-      printFrame.remove()
       console.error('Failed to export order DOCX as PDF', error)
       setDocxError(messages.docxExportError)
     } finally {

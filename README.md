@@ -12,7 +12,7 @@
 - **Quản lý giỏ hàng:** thay đổi số lượng, xem tạm tính và tổng tiền.
 - **Tạo bill:** hiển thị món, size, số lượng, đơn giá, thành tiền, tổng cộng và thông tin thanh toán VietQR/Zalo.
 - **Tải DOCX:** điền dữ liệu đơn hàng vào mẫu DOCX ngay trên trình duyệt.
-- **Xuất PDF từ DOCX:** render DOCX đã điền và mở hộp thoại in của trình duyệt. Chọn **Lưu dưới dạng PDF** để lưu file; ứng dụng không cần backend để thực hiện bước này.
+- **Xuất PDF từ DOCX:** render DOCX đã điền trong một iframe riêng, tạo file PDF và tải trực tiếp về thiết bị; không cần hộp thoại in hay backend. Trên điện thoại, mở/chia sẻ file PDF đã tải để in.
 - **Tải mẫu DOCX:** tải mẫu trống để chỉnh sửa bằng Word.
 - **Đa ngôn ngữ:** giao diện tiếng Việt, English và 日本語.
 - **Giao diện:** hỗ trợ sáng/tối và bố cục thích ứng với màn hình nhỏ.
@@ -23,7 +23,7 @@
 - Vite 7
 - Tailwind CSS 4
 - `docxtemplater` và `pizzip` để điền biến vào DOCX
-- `docx-preview` để render DOCX trong trình duyệt trước khi xuất PDF
+- `docx-preview`, `html2canvas` và `jsPDF` để render DOCX và tạo PDF trong trình duyệt
 - `docx` để tạo file mẫu DOCX
 
 ## Yêu cầu
@@ -44,10 +44,10 @@ Mở địa chỉ Vite hiển thị trong terminal để sử dụng ứng dụn
 
 1. Thêm món vào giỏ, chọn **Đặt món** để mở bill.
 2. Chọn **Tải hóa đơn DOCX** để tải DOCX đã được điền thông tin đơn hàng.
-3. Hoặc chọn **Xuất PDF từ DOCX** để mở hộp thoại in của trình duyệt.
-4. Trong hộp thoại in, chọn máy in PDF hoặc **Lưu dưới dạng PDF**.
+3. Hoặc chọn **Xuất PDF từ DOCX** để tải PDF trực tiếp về thiết bị.
+4. Mở file PDF vừa tải để in hoặc chia sẻ bằng chức năng của thiết bị.
 
-PDF được tạo từ chính mẫu DOCX đã điền, không phải từ bản xem trước HTML. Kích thước và bố cục in được khai báo trong mẫu; trình duyệt có thể áp dụng thêm thiết lập khổ giấy, lề hoặc tỷ lệ in của người dùng.
+PDF được tạo từ mẫu DOCX đã điền, không phải từ bản xem trước HTML. DOCX được render thành ảnh chất lượng cao trong PDF nên văn bản sẽ không thể chọn hoặc sao chép. Renderer chạy trong iframe riêng để không ảnh hưởng đến CSS của giao diện chính.
 
 ## Mẫu DOCX và biến
 

@@ -45,49 +45,64 @@ export async function fillOrderDocumentTemplate(data: OrderDocumentData): Promis
   return document.toBlob()
 }
 
-export async function printOrderDocumentAsPdf(
-  data: OrderDocumentData,
-  printWindow: Window,
-  fileName: string,
-): Promise<void> {
-  const [documentBlob, { renderAsync }] = await Promise.all([
+export async function createOrderPdf(data: OrderDocumentData): Promise<Blob> {
+  const [documentBlob, { renderAsync }, html2canvasModule, jspdfModule] = await Promise.all([
     fillOrderDocumentTemplate(data),
     import('docx-preview'),
+    import('html2canvas'),
+    import('jspdf'),
   ])
-  const printDocument = printWindow.document
-  printDocument.open()
-  printDocument.write(`<!doctype html>
-    <html lang="vi">
-      <head>
-        <meta charset="utf-8">
-        <title>${fileName}</title>
-        <style>
-          @page { size: 80mm 150mm; margin: 0; }
-          html, body { margin: 0; padding: 0; background: #fff; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .docx { margin: 0 auto !important; box-shadow: none !important; }
-          @media print {
-            html, body { width: 80mm; margin: 0 !important; padding: 0 !important; }
-            .docx { margin: 0 auto !important; }
-          }
-        </style>
-      </head>
-      <body><main id="docx-content"></main></body>
-    </html>`)
-  printDocument.close()
-  const content = printDocument.getElementById('docx-content')
-  if (!content) {
-    throw new Error('Could not create the DOCX print document')
+  const renderFrame = document.createElement('iframe')
+  renderFrame.title = 'DOCX PDF rendering'
+  renderFrame.style.cssText = 'position:fixed;left:-10000px;top:0;width:80mm;height:150mm;border:0'
+  document.body.append(renderFrame)
+
+  try {
+    const renderDocument = renderFrame.contentDocument
+    const renderWindow = renderFrame.contentWindow
+    if (!renderDocument || !renderWindow) {
+      throw new Error('Could not create an isolated DOCX rendering document')
+    }
+
+    renderDocument.open()
+    renderDocument.write('<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#fff;color:#222"></body></html>')
+    renderDocument.close()
+    const renderHost = renderDocument.createElement('main')
+    renderHost.style.cssText = 'width:80mm;background:#fff;color:#222'
+    renderDocument.body.append(renderHost)
+
+    await renderAsync(documentBlob, renderHost, renderDocument.head, {
+      inWrapper: false,
+      breakPages: true,
+      useBase64URL: true,
+    })
+    await renderDocument.fonts.ready
+    await Promise.all(
+      Array.from(renderHost.querySelectorAll('img'), (image) => image.decode()),
+    )
+    const content = renderHost.firstElementChild
+    if (!content || content.nodeType !== 1) {
+      throw new Error('Could not render the DOCX document')
+    }
+    const renderedContent = content as HTMLElement
+
+    const canvas = await html2canvasModule.default(renderedContent, {
+      backgroundColor: '#ffffff',
+      scale: Math.min(renderWindow.devicePixelRatio || 1, 2),
+      useCORS: true,
+      logging: false,
+      windowWidth: renderedContent.scrollWidth,
+    })
+    const pageHeight = Math.max(1, (canvas.height / canvas.width) * 80)
+    const pdf = new jspdfModule.jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [80, pageHeight],
+      compress: true,
+    })
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, 80, pageHeight)
+    return pdf.output('blob')
+  } finally {
+    renderFrame.remove()
   }
-  await renderAsync(documentBlob, content, printDocument.head, {
-    inWrapper: false,
-    breakPages: true,
-    useBase64URL: true,
-  })
-  await printDocument.fonts.ready
-  printWindow.addEventListener('afterprint', () => {
-    printWindow.frameElement?.remove()
-  }, { once: true })
-  printWindow.focus()
-  printWindow.print()
 }
