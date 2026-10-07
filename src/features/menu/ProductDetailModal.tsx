@@ -1,18 +1,20 @@
 import { useState } from 'react'
-import type { MenuItem } from '../../types/menu'
+import type { MenuItem, ProductSize } from '../../types/menu'
 import { Button } from '../../components/ui/Button'
 import { getProductPrice } from '../../utils/menu'
 
 type ProductDetailModalProps = {
   item: MenuItem
   onClose: () => void
-  onAdd: (item: MenuItem, quantity: number) => void
+  onAdd: (item: MenuItem, size: ProductSize | null, quantity: number) => void
 }
 
 export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalProps) {
   const [quantity, setQuantity] = useState(1)
+  const [selectedSize, setSelectedSize] = useState<ProductSize | null>(item.sizes?.[0] ?? null)
   const details = item.details
-  const finalPrice = getProductPrice(item)
+  const finalPrice = getProductPrice(item, selectedSize)
+  const originalPrice = selectedSize?.price ?? item.price
 
   return (
     <div
@@ -39,13 +41,33 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
           <div className="product-modal-title-row">
             <h2 id="product-modal-title">{item.name}</h2>
             <div className="product-modal-price">
-              {item.discountPercent && <><span className="discount-inline">-{item.discountPercent}%</span><del>{new Intl.NumberFormat('vi-VN').format(item.price)}đ</del></>}
+              {item.discountPercent && <><span className="discount-inline">-{item.discountPercent}%</span><del>{new Intl.NumberFormat('vi-VN').format(originalPrice)}đ</del></>}
               <strong className={item.discountPercent ? 'product-price--discount' : ''}>
                 {new Intl.NumberFormat('vi-VN').format(finalPrice)}đ
               </strong>
             </div>
           </div>
           <p className="product-modal-description">{details?.note ?? item.description}</p>
+
+          {item.sizes && item.sizes.length > 0 && (
+            <fieldset className="product-size-options">
+              <legend>Chọn size</legend>
+              <div>
+                {item.sizes.map((size) => (
+                  <button
+                    className={`product-size-option${selectedSize?.id === size.id ? ' is-selected' : ''}`}
+                    type="button"
+                    key={size.id}
+                    aria-pressed={selectedSize?.id === size.id}
+                    onClick={() => setSelectedSize(size)}
+                  >
+                    <span>{size.name}</span>
+                    <strong>{new Intl.NumberFormat('vi-VN').format(getProductPrice(item, size))}đ</strong>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           <div className="product-facts">
             <div><span>◷</span><strong>{details?.preparationTime ?? 'Đang cập nhật'}</strong><small>Chuẩn bị</small></div>
@@ -81,7 +103,7 @@ export function ProductDetailModal({ item, onClose, onAdd }: ProductDetailModalP
             <Button
               className="modal-add-button"
               onClick={() => {
-                onAdd(item, quantity)
+                onAdd(item, selectedSize, quantity)
                 onClose()
               }}
             >

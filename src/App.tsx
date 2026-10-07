@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { MenuCategory, MenuItem } from './types/menu'
+import type { MenuCategory, MenuItem, ProductSize } from './types/menu'
 import { categories, menuItems } from './data/menu'
 import { Button } from './components/ui/Button'
 import { Input } from './components/ui/Input'
@@ -9,7 +9,12 @@ import { getProductPrice } from './utils/menu'
 
 type CartItem = {
   item: MenuItem
+  size: ProductSize | null
   quantity: number
+}
+
+function getCartItemKey(item: MenuItem, size: ProductSize | null) {
+  return `${item.id}:${size?.id ?? 'default'}`
 }
 
 function Icon({
@@ -77,7 +82,7 @@ function App() {
   }, [activeCategory, search])
 
   const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
-  const subtotal = cart.reduce((sum, entry) => sum + getProductPrice(entry.item) * entry.quantity, 0)
+  const subtotal = cart.reduce((sum, entry) => sum + getProductPrice(entry.item, entry.size) * entry.quantity, 0)
 
   useEffect(() => {
     if (!selectedProduct) return
@@ -90,24 +95,38 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedProduct])
 
-  function addToCart(item: MenuItem, quantity = 1) {
+  function addToCart(item: MenuItem, size: ProductSize | null = null, quantity = 1) {
     setCart((current) => {
-      const existing = current.find((entry) => entry.item.id === item.id)
+      const itemKey = getCartItemKey(item, size)
+      const existing = current.find((entry) => getCartItemKey(entry.item, entry.size) === itemKey)
       if (existing) {
         return current.map((entry) =>
-          entry.item.id === item.id ? { ...entry, quantity: entry.quantity + quantity } : entry,
+          getCartItemKey(entry.item, entry.size) === itemKey
+            ? { ...entry, quantity: entry.quantity + quantity }
+            : entry,
         )
       }
-      return [...current, { item, quantity }]
+      return [...current, { item, size, quantity }]
     })
     setOrderMessage('')
   }
 
-  function changeQuantity(itemId: string, amount: number) {
+  function handleAddClick(item: MenuItem) {
+    if (item.sizes?.length) {
+      setSelectedProduct(item)
+      return
+    }
+    addToCart(item)
+  }
+
+  function changeQuantity(item: MenuItem, size: ProductSize | null, amount: number) {
+    const itemKey = getCartItemKey(item, size)
     setCart((current) =>
       current
         .map((entry) =>
-          entry.item.id === itemId ? { ...entry, quantity: entry.quantity + amount } : entry,
+          getCartItemKey(entry.item, entry.size) === itemKey
+            ? { ...entry, quantity: entry.quantity + amount }
+            : entry,
         )
         .filter((entry) => entry.quantity > 0),
     )
@@ -140,26 +159,27 @@ function App() {
       ) : (
         <>
           <div className="cart-items">
-            {cart.map(({ item, quantity }) => (
-              <div className="cart-item" key={item.id}>
+            {cart.map(({ item, size, quantity }) => (
+              <div className="cart-item" key={getCartItemKey(item, size)}>
                 <img src={item.image} alt="" />
                 <div className="cart-item-info">
                   <h3>{item.name}</h3>
+                  {size && <p className="cart-item-size">{size.name}</p>}
                   <p className="cart-item-price">
-                    {item.discountPercent && <del>{formatPrice(item.price)}</del>}
-                    <strong>{formatPrice(getProductPrice(item))}</strong>
+                    {item.discountPercent && <del>{formatPrice(size?.price ?? item.price)}</del>}
+                    <strong>{formatPrice(getProductPrice(item, size))}</strong>
                   </p>
                   <div className="quantity-control" aria-label={`Số lượng ${item.name}`}>
-                    <button type="button" aria-label={`Giảm ${item.name}`} onClick={() => changeQuantity(item.id, -1)}>
+                    <button type="button" aria-label={`Giảm ${item.name} ${size?.name ?? ''}`} onClick={() => changeQuantity(item, size, -1)}>
                       <Icon name="minus" size={15} />
                     </button>
                     <span>{quantity}</span>
-                    <button type="button" aria-label={`Tăng ${item.name}`} onClick={() => changeQuantity(item.id, 1)}>
+                    <button type="button" aria-label={`Tăng ${item.name} ${size?.name ?? ''}`} onClick={() => changeQuantity(item, size, 1)}>
                       <Icon name="plus" size={15} />
                     </button>
                   </div>
                 </div>
-                <strong className="cart-line-total">{formatPrice(getProductPrice(item) * quantity)}</strong>
+                <strong className="cart-line-total">{formatPrice(getProductPrice(item, size) * quantity)}</strong>
               </div>
             ))}
           </div>
@@ -274,7 +294,7 @@ function App() {
                     <ProductCard
                       item={item}
                       key={item.id}
-                      onAdd={addToCart}
+                      onAdd={handleAddClick}
                       onDetails={setSelectedProduct}
                       inCart={cart.some((entry) => entry.item.id === item.id)}
                     />
@@ -303,6 +323,7 @@ function App() {
       {mobileCartOpen && <button className="cart-backdrop" aria-label="Đóng giỏ hàng" onClick={() => setMobileCartOpen(false)} />}
       {selectedProduct && (
         <ProductDetailModal
+          key={selectedProduct.id}
           item={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAdd={addToCart}

@@ -10,7 +10,9 @@ type ProductCardProps = {
 }
 
 export function ProductCard({ item, onAdd, onDetails, inCart }: ProductCardProps) {
-  const finalPrice = getProductPrice(item)
+  const startingSize = item.sizes?.[0]
+  const startingPrice = startingSize?.price ?? item.price
+  const finalPrice = getProductPrice(item, startingSize)
 
   return (
     <article className="product-card">
@@ -31,8 +33,9 @@ export function ProductCard({ item, onAdd, onDetails, inCart }: ProductCardProps
         <div className="product-title-row">
           <h3>{item.name}</h3>
           <div className="product-price-group">
-            {item.discountPercent && <del>{new Intl.NumberFormat('vi-VN').format(item.price)}đ</del>}
+            {item.discountPercent && <del>{new Intl.NumberFormat('vi-VN').format(startingPrice)}đ</del>}
             <strong className={`product-price${item.discountPercent ? ' product-price--discount' : ''}`}>
+              {item.sizes?.length ? 'Từ ' : ''}
               {new Intl.NumberFormat('vi-VN').format(finalPrice)}đ
             </strong>
           </div>
@@ -47,7 +50,7 @@ export function ProductCard({ item, onAdd, onDetails, inCart }: ProductCardProps
           onClick={() => onAdd(item)}
           aria-label={`Thêm ${item.name} vào giỏ hàng`}
         >
-          <span>{inCart ? 'Thêm phần nữa' : 'Thêm vào giỏ'}</span>
+          <span>{item.sizes?.length ? 'Chọn size' : inCart ? 'Thêm phần nữa' : 'Thêm vào giỏ'}</span>
           <span className="add-button-icon">+</span>
         </Button>
       </div>
