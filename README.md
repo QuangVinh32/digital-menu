@@ -21,6 +21,8 @@ npm run dev
 
 The menu interface is available in Vietnamese, English, and Japanese. Use the language selector in the header; Vietnamese is selected by default.
 
+Order receipts print to a compact 80 mm-wide PDF page. The page height grows with the number of order lines to reduce blank space and excess paper.
+
 ## Production build
 
 ```bash

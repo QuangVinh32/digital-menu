@@ -176,6 +176,12 @@ function App() {
       String(date.getMonth() + 1).padStart(2, '0'),
       String(date.getDate()).padStart(2, '0'),
     ].join('-')
+    const pageStyles = document.getElementById('receipt-page-size')
+    const pageRule = pageStyles instanceof HTMLStyleElement ? pageStyles.sheet?.cssRules[0] : undefined
+    if (pageRule instanceof CSSPageRule) {
+      const pageHeight = 96 + Math.max(0, cart.length - 1) * 15
+      pageRule.style.setProperty('size', `80mm ${pageHeight}mm`)
+    }
     const originalTitle = document.title
     document.title = `don-hang-${fileDate}`
     window.addEventListener('afterprint', () => {
@@ -326,6 +332,12 @@ function App() {
                 </div>
               </div>
               <div className="hero-decoration" aria-hidden="true">
+                <img
+                  className="hero-food-image"
+                  src={menuItems[0].image}
+                  alt=""
+                  fetchPriority="high"
+                />
                 <span className="hero-stamp">{messages.heroStamp}<br /><b>♡</b></span>
               </div>
             </section>

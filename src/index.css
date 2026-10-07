@@ -307,6 +307,9 @@ select:focus-visible {
 }
 
 .hero-content {
+  position: relative;
+  z-index: 1;
+  width: 62%;
   max-width: 540px;
 }
 
@@ -376,13 +379,15 @@ select:focus-visible {
 
 .hero-stamp {
   position: absolute;
-  top: 76px;
-  right: 13%;
+  z-index: 1;
+  right: 28%;
+  bottom: 20px;
   display: grid;
   width: 112px;
   height: 112px;
-  color: var(--accent);
-  border: 1px solid rgb(97 115 75 / 48%);
+  color: #4b5c37;
+  background: rgb(255 255 255 / 88%);
+  border: 1px solid rgb(255 255 255 / 75%);
   border-radius: 50%;
   font-size: 9px;
   font-weight: 700;
@@ -391,6 +396,30 @@ select:focus-visible {
   text-align: center;
   transform: rotate(12deg);
   place-content: center;
+}
+
+.hero-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-food-image {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 48%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 48% 0 0 48% / 100% 0 0 100%;
+}
+
+.hero-decoration::after {
+  position: absolute;
+  inset: 0 30% 0 40%;
+  background: linear-gradient(90deg, var(--hero), transparent);
+  content: '';
 }
 
 .hero-stamp b {
@@ -1378,10 +1407,19 @@ select:focus-visible {
   }
 
   .hero-stamp {
-    right: 8%;
+    right: 20%;
     width: 88px;
     height: 88px;
     font-size: 8px;
+  }
+
+  .hero-content {
+    width: 72%;
+  }
+
+  .hero-food-image {
+    width: 54%;
+    opacity: .88;
   }
 
   .mobile-cart-button {
@@ -1502,17 +1540,34 @@ select:focus-visible {
   }
 
   .hero-content > p {
-    max-width: 285px;
+    max-width: 250px;
     font-size: 11px;
   }
 
   .hero-stamp {
     top: auto;
-    right: -14px;
-    bottom: 14px;
-    width: 74px;
-    height: 74px;
-    font-size: 7px;
+    right: 8px;
+    bottom: 12px;
+    width: 64px;
+    height: 64px;
+    font-size: 6px;
+    letter-spacing: .8px;
+  }
+
+  .hero-content {
+    width: 100%;
+    max-width: 76%;
+  }
+
+  .hero-food-image {
+    right: -22%;
+    width: 72%;
+    opacity: .38;
+  }
+
+  .hero-decoration::after {
+    inset: 0 0 0 26%;
+    background: linear-gradient(90deg, var(--hero), rgb(239 238 229 / 20%));
   }
 
   .hero-details {
@@ -1851,10 +1906,6 @@ select:focus-visible {
   }
 }
 
-@page {
-  margin: 16mm;
-}
-
 @media print {
   body {
     min-width: 0;
@@ -1898,16 +1949,130 @@ select:focus-visible {
     display: block;
     position: static;
     font-family: Arial, 'Segoe UI', sans-serif;
-    font-size: 12px;
+    font-size: 8pt;
     overflow: visible;
     padding: 0;
     background: #fff;
   }
 
   .receipt-sheet {
-    width: auto;
+    width: 74mm;
+    max-width: 100%;
     padding: 0;
     box-shadow: none;
+  }
+
+  .print-receipt-header {
+    padding-bottom: 2mm;
+    margin-bottom: 2mm;
+  }
+
+  .print-receipt-header h1 {
+    margin-bottom: 1mm;
+    font-size: 13pt;
+  }
+
+  .print-receipt-header p,
+  .print-receipt-header time {
+    margin-top: .5mm;
+    font-size: 7pt;
+  }
+
+  .print-receipt table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .print-receipt tbody {
+    display: table-row-group;
+  }
+
+  .print-receipt thead {
+    display: table-header-group;
+  }
+
+  .print-receipt tr {
+    display: table-row;
+    border: 0;
+    break-inside: avoid;
+  }
+
+  .print-receipt th,
+  .print-receipt td {
+    display: table-cell;
+    padding: 1.2mm .5mm;
+    border-bottom: .2mm solid #ddd;
+    font-size: 6.5pt;
+    overflow-wrap: anywhere;
+  }
+
+  .print-receipt th:first-child,
+  .print-receipt td:first-child {
+    width: 7%;
+    height: auto;
+    padding: 1.2mm .3mm;
+    color: inherit;
+    background: transparent;
+    border-radius: 0;
+    font-size: 6.5pt;
+    font-weight: 400;
+    text-align: center;
+  }
+
+  .print-receipt th:nth-child(2),
+  .print-receipt td:nth-child(2) {
+    width: 37%;
+    padding-bottom: 1.2mm;
+    font-size: 6.5pt;
+    font-weight: 400;
+    text-align: left;
+  }
+
+  .print-receipt th:nth-child(n + 3),
+  .print-receipt td:nth-child(n + 3) {
+    width: 18.6%;
+    text-align: right;
+  }
+
+  .print-receipt td::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .print-receipt-total {
+    padding-top: 2mm;
+    margin: 0;
+    font-size: 9pt;
+  }
+
+  .receipt-payment {
+    gap: 2mm;
+    padding: 2mm;
+    margin-top: 2mm;
+    border-radius: 1.5mm;
+  }
+
+  .receipt-payment h2 {
+    font-size: 8pt;
+  }
+
+  .receipt-payment p,
+  .receipt-contact,
+  .receipt-contact address,
+  .receipt-payment a {
+    margin-top: .8mm;
+    margin-bottom: .8mm;
+    font-size: 6pt;
+  }
+
+  .receipt-payment img {
+    width: 23mm;
+  }
+
+  .print-item-size {
+    margin-top: .5mm;
+    font-size: 6pt;
   }
 
 }
