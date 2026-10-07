@@ -66,7 +66,7 @@ function App() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isDark, setIsDark] = useState(false)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
-  const [orderMessage, setOrderMessage] = useState('')
+  const [receiptOpen, setReceiptOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null)
 
   const filteredItems = useMemo(() => {
@@ -83,17 +83,24 @@ function App() {
 
   const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
   const subtotal = cart.reduce((sum, entry) => sum + getProductPrice(entry.item, entry.size) * entry.quantity, 0)
+  const orderDate = new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date())
 
   useEffect(() => {
-    if (!selectedProduct) return
+    if (!selectedProduct && !receiptOpen) return
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setSelectedProduct(null)
+      if (event.key === 'Escape') {
+        if (receiptOpen) setReceiptOpen(false)
+        else setSelectedProduct(null)
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedProduct])
+  }, [selectedProduct, receiptOpen])
 
   function addToCart(item: MenuItem, size: ProductSize | null = null, quantity = 1) {
     setCart((current) => {
@@ -108,7 +115,6 @@ function App() {
       }
       return [...current, { item, size, quantity }]
     })
-    setOrderMessage('')
   }
 
   function handleAddClick(item: MenuItem) {
@@ -130,6 +136,26 @@ function App() {
         )
         .filter((entry) => entry.quantity > 0),
     )
+  }
+
+  function printOrder() {
+    const date = new Date()
+    const fileDate = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-')
+    const originalTitle = document.title
+    document.title = `don-hang-${fileDate}`
+    window.addEventListener('afterprint', () => {
+      document.title = originalTitle
+    }, { once: true })
+    window.print()
+  }
+
+  function placeOrder() {
+    setMobileCartOpen(false)
+    setReceiptOpen(true)
   }
 
   const cartPanel = (
@@ -189,11 +215,10 @@ function App() {
             <div className="summary-total"><span>Tổng cộng</span><strong>{formatPrice(subtotal)}</strong></div>
             <Button
               className="checkout-button"
-              onClick={() => setOrderMessage('Đây là bản demo — đơn hàng chưa được gửi đi.')}
+              onClick={placeOrder}
             >
               Đặt món <Icon name="arrow" size={18} />
             </Button>
-            {orderMessage && <p className="order-message" role="status">{orderMessage}</p>}
             <p className="cart-note">Thanh toán tại quầy sau khi xác nhận món</p>
           </div>
         </>
@@ -328,6 +353,64 @@ function App() {
           onClose={() => setSelectedProduct(null)}
           onAdd={addToCart}
         />
+      )}
+      {receiptOpen && (
+        <section
+          className="print-receipt is-open"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Hoá đơn đặt món"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setReceiptOpen(false)
+          }}
+        >
+          <div className="receipt-sheet">
+            <header className="print-receipt-header">
+              <h1>Bếp Nhà</h1>
+              <p>Phiếu đặt món</p>
+              <time>{orderDate}</time>
+            </header>
+            <table>
+              <thead>
+                <tr>
+                  <th>Tên món</th>
+                  <th>Số lượng</th>
+                  <th>Đơn giá</th>
+                  <th>Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cart.map(({ item, size, quantity }) => (
+                  <tr key={getCartItemKey(item, size)}>
+                    <td>
+                      {item.name}
+                      {size && <small className="print-item-size">{size.name}</small>}
+                    </td>
+                    <td data-label="Số lượng">{quantity}</td>
+                    <td data-label="Đơn giá">{formatPrice(getProductPrice(item, size))}</td>
+                    <td data-label="Thành tiền">{formatPrice(getProductPrice(item, size) * quantity)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="print-receipt-total"><span>Tổng cộng</span><strong>{formatPrice(subtotal)}</strong></p>
+            <p className="receipt-hint">Chụp màn hình bill này rồi gửi cho chủ quán qua Zalo nhé.</p>
+            <section className="receipt-payment" aria-label="Thông tin thanh toán và liên hệ">
+              <div>
+                <h2>Thanh toán qua VietQR</h2>
+                <p>Quét mã để thanh toán đơn hàng</p>
+                <a href="https://zalo.me/0357700838" target="_blank" rel="noreferrer">
+                  Liên hệ Zalo: 0357 700 838
+                </a>
+              </div>
+              <img src="/payment-qr.png" alt="Mã QR thanh toán VietQR của chủ quán" />
+            </section>
+            <div className="receipt-actions">
+              <Button onClick={printOrder}>Lưu / in PDF</Button>
+              <Button variant="secondary" onClick={() => setReceiptOpen(false)}>Đóng bill</Button>
+            </div>
+          </div>
+        </section>
       )}
     </div>
   )
