@@ -338,8 +338,17 @@ function App() {
             </section>
 
             <footer className="site-footer">
-              <span>© 2026 Bếp Nhà Quang Vinh · Nấu bằng cả tấm lòng</span>
-              <span><Icon name="leaf" size={14} /> Tươi ngon mỗi ngày</span>
+              <div className="footer-contact">
+                <strong>Liên hệ chủ quán · Lê Quang Vinh</strong>
+                <a href="https://zalo.me/0357700838" target="_blank" rel="noreferrer">
+                  Zalo: 0357 700 838
+                </a>
+                <address>Địa chỉ: xã Quỳnh Phú, tỉnh Nghệ An</address>
+              </div>
+              <div className="footer-note">
+                <span>© 2026 Bếp Nhà Quang Vinh · Nấu bằng cả tấm lòng</span>
+                <span><Icon name="leaf" size={14} /> Tươi ngon mỗi ngày</span>
+              </div>
             </footer>
           </main>
         </div>
@@ -399,8 +408,12 @@ function App() {
               <div>
                 <h2>Thanh toán qua VietQR</h2>
                 <p>Quét mã để thanh toán đơn hàng</p>
+                <div className="receipt-contact">
+                  <strong>Chủ quán: Lê Quang Vinh</strong>
+                  <address>Địa chỉ: xã Quỳnh Phú, tỉnh Nghệ An</address>
+                </div>
                 <a href="https://zalo.me/0357700838" target="_blank" rel="noreferrer">
-                  Liên hệ Zalo: 0357 700 838
+                  Zalo: 0357 700 838
                 </a>
               </div>
               <img src="/payment-qr.png" alt="Mã QR thanh toán VietQR của chủ quán" />

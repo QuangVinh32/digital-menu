@@ -1021,10 +1021,11 @@ input:focus-visible {
 }
 
 .site-footer {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
   justify-content: space-between;
-  gap: 10px;
+  gap: 16px;
   padding: 20px 0 23px;
   margin-top: 28px;
   color: var(--text-muted);
@@ -1032,7 +1033,39 @@ input:focus-visible {
   font-size: 10px;
 }
 
-.site-footer span:last-child {
+.footer-contact {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+}
+
+.footer-contact strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.footer-contact a {
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-contact a:hover {
+  text-decoration: underline;
+}
+
+.footer-contact address {
+  font-size: 10px;
+  font-style: normal;
+}
+
+.footer-note {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.footer-note span:last-child {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1546,7 +1579,13 @@ input:focus-visible {
   }
 
   .site-footer {
+    grid-template-columns: 1fr;
+    align-items: start;
     font-size: 8px;
+  }
+
+  .footer-note {
+    justify-items: start;
   }
 }
 
@@ -1637,6 +1676,19 @@ input:focus-visible {
   margin: 5px 0 9px;
   color: #60656b;
   font-size: 11px;
+}
+
+.receipt-contact {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 9px;
+  font-size: 11px;
+}
+
+.receipt-contact address {
+  color: #60656b;
+  font-size: 10px;
+  font-style: normal;
 }
 
 .receipt-payment a {
@@ -1732,6 +1784,14 @@ input:focus-visible {
 
   .receipt-payment p {
     font-size: 10px;
+  }
+
+  .receipt-contact {
+    font-size: 10px;
+  }
+
+  .receipt-contact address {
+    font-size: 9px;
   }
 
   .receipt-payment a {
