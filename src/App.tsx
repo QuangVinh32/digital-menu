@@ -221,27 +221,6 @@ function App() {
     )
   }
 
-  function printOrder() {
-    const date = new Date()
-    const fileDate = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0'),
-    ].join('-')
-    const pageStyles = document.getElementById('receipt-page-size')
-    const pageRule = pageStyles instanceof HTMLStyleElement ? pageStyles.sheet?.cssRules[0] : undefined
-    if (pageRule instanceof CSSPageRule) {
-      const pageHeight = 102 + Math.max(0, cart.length - 1) * 15
-      pageRule.style.setProperty('size', `80mm ${pageHeight}mm`)
-    }
-    const originalTitle = document.title
-    document.title = `don-hang-${fileDate}`
-    window.addEventListener('afterprint', () => {
-      document.title = originalTitle
-    }, { once: true })
-    window.print()
-  }
-
   function getOrderDocumentData() {
     return {
       storeName: language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà',
@@ -598,7 +577,7 @@ function App() {
       )}
       {receiptOpen && (
         <section
-          className="print-receipt is-open"
+          className="receipt-preview is-open"
           role="dialog"
           aria-modal="true"
           aria-label={messages.receiptLabel}
@@ -607,7 +586,7 @@ function App() {
           }}
         >
           <div className="receipt-sheet">
-            <header className="print-receipt-header">
+            <header className="receipt-header">
               <h1>{language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà'}</h1>
               <p>{messages.receiptTitle}</p>
               <time>{orderDate}</time>
@@ -631,7 +610,7 @@ function App() {
                       <td data-label={messages.itemNumber}>{index + 1}</td>
                       <td>
                         {localizedItem.name}
-                        {localizedSize && <small className="print-item-size">{localizedSize.name}</small>}
+                        {localizedSize && <small className="receipt-item-size">{localizedSize.name}</small>}
                       </td>
                       <td data-label={messages.quantity}>{quantity}</td>
                       <td data-label={messages.unitPrice}>{formatPrice(getProductPrice(item, size), language)}</td>
@@ -641,7 +620,7 @@ function App() {
                 })}
               </tbody>
             </table>
-            <p className="print-receipt-total"><span>{messages.total}</span><strong>{formatPrice(subtotal, language)}</strong></p>
+            <p className="receipt-total"><span>{messages.total}</span><strong>{formatPrice(subtotal, language)}</strong></p>
             <p className="receipt-hint">{messages.screenshotHint}</p>
             <section className="receipt-payment" aria-label={messages.paymentTitle}>
               <div>
@@ -664,7 +643,6 @@ function App() {
               <Button onClick={exportOrderPdfFromDocx} disabled={docxBusy}>
                 {docxBusy ? messages.pdfExporting : messages.exportPdfFromDocx}
               </Button>
-              <Button variant="secondary" onClick={printOrder}>{messages.savePdf}</Button>
               <Button variant="secondary" onClick={() => setReceiptOpen(false)}>{messages.closeReceipt}</Button>
             </div>
             <p className="docx-hint">{messages.docxHint}</p>
