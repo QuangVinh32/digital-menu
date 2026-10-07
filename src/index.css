@@ -202,15 +202,72 @@ select:focus-visible {
   gap: 22px;
 }
 
-.language-picker select {
-  max-width: 112px;
-  padding: 8px 25px 8px 10px;
+.language-picker {
+  position: relative;
+}
+
+.language-picker-trigger {
+  display: grid;
+  width: 40px;
+  height: 40px;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 19px;
+  place-items: center;
+}
+
+.language-picker-trigger:hover {
+  background: var(--surface-muted);
+}
+
+.flag-icon {
+  display: block;
+  width: 24px;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 12%);
+}
+
+.language-menu {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  min-width: 148px;
+  gap: 3px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  box-shadow: var(--shadow);
+}
+
+.language-menu-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+}
+
+.language-menu-option .flag-icon {
+  flex: 0 0 auto;
+}
+
+.language-menu-option:hover,
+.language-menu-option[aria-pressed='true'] {
+  background: var(--surface-muted);
 }
 
 .open-status {
@@ -517,6 +574,7 @@ select:focus-visible {
 
 .search-box:focus-within {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-pale);
 }
 
 .input {
@@ -528,6 +586,10 @@ select:focus-visible {
   border: 0;
   outline: 0;
   font-size: 11px;
+}
+
+.search-box .input:focus-visible {
+  outline: none;
 }
 
 .input::placeholder {
@@ -1519,12 +1581,6 @@ select:focus-visible {
     gap: 0;
     overflow: hidden;
     font-size: 0;
-  }
-
-  .language-picker select {
-    max-width: 91px;
-    padding: 8px 20px 8px 7px;
-    font-size: 10px;
   }
 
   .icon-button,

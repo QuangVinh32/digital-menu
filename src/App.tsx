@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MenuItem, ProductSize } from './types/menu'
 import { categories, menuItems } from './data/menu'
 import { Button } from './components/ui/Button'
@@ -13,6 +13,40 @@ type CartItem = {
   item: MenuItem
   size: ProductSize | null
   quantity: number
+}
+
+const languageOptions = [
+  { code: 'vi', flag: 'vi', label: 'Tiếng Việt' },
+  { code: 'en', flag: 'en', label: 'English' },
+  { code: 'ja', flag: 'ja', label: '日本語' },
+] as const
+
+function FlagIcon({ country }: { country: (typeof languageOptions)[number]['flag'] }) {
+  return (
+    <svg className="flag-icon" viewBox="0 0 30 20" aria-hidden="true">
+      {country === 'vi' && (
+        <>
+          <rect width="30" height="20" fill="#da251d" />
+          <path d="m15 3 1.45 4.47h4.7l-3.8 2.76 1.45 4.47L15 11.94l-3.8 2.76 1.45-4.47-3.8-2.76h4.7z" fill="#ff0" />
+        </>
+      )}
+      {country === 'en' && (
+        <>
+          <rect width="30" height="20" fill="#012169" />
+          <path d="m0 0 30 20M30 0 0 20" stroke="#fff" strokeWidth="4.5" />
+          <path d="m0 0 30 20M30 0 0 20" stroke="#c8102e" strokeWidth="1.8" />
+          <path d="M15 0v20M0 10h30" stroke="#fff" strokeWidth="7" />
+          <path d="M15 0v20M0 10h30" stroke="#c8102e" strokeWidth="3.5" />
+        </>
+      )}
+      {country === 'ja' && (
+        <>
+          <rect width="30" height="20" fill="#fff" />
+          <circle cx="15" cy="10" r="6" fill="#bc002d" />
+        </>
+      )}
+    </svg>
+  )
 }
 
 function getCartItemKey(item: MenuItem, size: ProductSize | null) {
@@ -70,7 +104,9 @@ function App() {
   const [isDark, setIsDark] = useState(false)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null)
+  const languagePickerRef = useRef<HTMLDivElement>(null)
   const messages = translations[language]
   const locale = language === 'ja' ? 'ja-JP' : language === 'en' ? 'en-US' : 'vi-VN'
   const localizedItems = useMemo(
@@ -113,18 +149,32 @@ function App() {
   }, [language, messages.menuTitle])
 
   useEffect(() => {
-    if (!selectedProduct && !receiptOpen) return
+    if (!selectedProduct && !receiptOpen && !languageMenuOpen) return
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         if (receiptOpen) setReceiptOpen(false)
+        else if (languageMenuOpen) setLanguageMenuOpen(false)
         else setSelectedProduct(null)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedProduct, receiptOpen])
+  }, [selectedProduct, receiptOpen, languageMenuOpen])
+
+  useEffect(() => {
+    if (!languageMenuOpen) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && !languagePickerRef.current?.contains(event.target)) {
+        setLanguageMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [languageMenuOpen])
 
   function addToCart(item: MenuItem, size: ProductSize | null = null, quantity = 1) {
     const canonicalItem = menuItems.find((menuItem) => menuItem.id === item.id) ?? item
@@ -282,23 +332,37 @@ function App() {
             </a>
             <div className="topbar-actions">
               <div className="open-status"><span className="status-dot" /> {messages.openStatus}</div>
-              <label className="language-picker">
-                <span className="sr-only">{messages.languageLabel}</span>
-                <select
-                  value={language}
-                  aria-label={messages.languageLabel}
-                  onChange={(event) => {
-                    const nextLanguage = event.target.value
-                    if (nextLanguage === 'vi' || nextLanguage === 'en' || nextLanguage === 'ja') {
-                      setLanguage(nextLanguage)
-                    }
-                  }}
+              <div className="language-picker" ref={languagePickerRef}>
+                <button
+                  className="language-picker-trigger"
+                  type="button"
+                  aria-label={`${messages.languageLabel}: ${languageOptions.find((option) => option.code === language)?.label}`}
+                  aria-expanded={languageMenuOpen}
+                  aria-controls="language-menu"
+                  onClick={() => setLanguageMenuOpen((open) => !open)}
                 >
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">English</option>
-                  <option value="ja">日本語</option>
-                </select>
-              </label>
+                  <FlagIcon country={language} />
+                </button>
+                {languageMenuOpen && (
+                  <div className="language-menu" id="language-menu" role="group" aria-label={messages.languageLabel}>
+                    {languageOptions.map((option) => (
+                      <button
+                        className="language-menu-option"
+                        type="button"
+                        aria-pressed={language === option.code}
+                        key={option.code}
+                        onClick={() => {
+                          setLanguage(option.code)
+                          setLanguageMenuOpen(false)
+                        }}
+                      >
+                        <FlagIcon country={option.flag} />
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button
                 className="icon-button theme-toggle"
                 type="button"
