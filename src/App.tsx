@@ -289,7 +289,7 @@ function App() {
             </section>
 
             <footer className="site-footer">
-              <span>© 2025 Bếp Nhà · Nấu bằng cả tấm lòng</span>
+              <span>© 2026 Bếp Nhà Quang Vinh · Nấu bằng cả tấm lòng</span>
               <span><Icon name="leaf" size={14} /> Tươi ngon mỗi ngày</span>
             </footer>
           </main>
