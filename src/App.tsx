@@ -442,6 +442,7 @@ function App() {
             <table>
               <thead>
                 <tr>
+                  <th>{messages.itemNumber}</th>
                   <th>{messages.itemName}</th>
                   <th>{messages.quantity}</th>
                   <th>{messages.unitPrice}</th>
@@ -449,11 +450,12 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {cart.map(({ item, size, quantity }) => {
+                {cart.map(({ item, size, quantity }, index) => {
                   const localizedItem = localizeMenuItem(item, language)
                   const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
                   return (
                     <tr key={getCartItemKey(item, size)}>
+                      <td data-label={messages.itemNumber}>{index + 1}</td>
                       <td>
                         {localizedItem.name}
                         {localizedSize && <small className="print-item-size">{localizedSize.name}</small>}
