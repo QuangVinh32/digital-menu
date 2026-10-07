@@ -117,6 +117,29 @@ select:focus-visible {
   min-height: 44px;
 }
 
+.docx-hint,
+.docx-error {
+  margin: 10px 0 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.docx-template-link {
+  display: block;
+  margin-top: 6px;
+  color: #4b5c37;
+  font-size: 12px;
+  text-align: center;
+}
+
+.docx-hint {
+  color: #60656b;
+}
+
+.docx-error {
+  color: #a32929;
+}
+
 .theme-dark {
   --page: #1c201a;
   --surface: #252a22;
@@ -2022,9 +2045,12 @@ select:focus-visible {
   }
 
   .receipt-sheet {
-    width: 74mm;
-    max-width: 100%;
-    padding: 0;
+    width: 78mm;
+    max-width: none;
+    padding: 2mm;
+    margin: 1mm auto;
+    border: .3mm solid #d8ded0;
+    border-radius: 3mm;
     box-shadow: none;
   }
 

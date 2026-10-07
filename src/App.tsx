@@ -104,6 +104,8 @@ function App() {
   const [isDark, setIsDark] = useState(false)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [docxBusy, setDocxBusy] = useState(false)
+  const [docxError, setDocxError] = useState<string | null>(null)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null)
   const languagePickerRef = useRef<HTMLDivElement>(null)
@@ -229,7 +231,7 @@ function App() {
     const pageStyles = document.getElementById('receipt-page-size')
     const pageRule = pageStyles instanceof HTMLStyleElement ? pageStyles.sheet?.cssRules[0] : undefined
     if (pageRule instanceof CSSPageRule) {
-      const pageHeight = 96 + Math.max(0, cart.length - 1) * 15
+      const pageHeight = 102 + Math.max(0, cart.length - 1) * 15
       pageRule.style.setProperty('size', `80mm ${pageHeight}mm`)
     }
     const originalTitle = document.title
@@ -238,6 +240,101 @@ function App() {
       document.title = originalTitle
     }, { once: true })
     window.print()
+  }
+
+  function getOrderDocumentData() {
+    return {
+      storeName: language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà',
+      receiptTitle: messages.receiptTitle,
+      date: orderDate,
+      itemNumberLabel: messages.itemNumber,
+      itemNameLabel: messages.itemName,
+      quantityLabel: messages.quantity,
+      unitPriceLabel: messages.unitPrice,
+      lineTotalLabel: messages.lineTotal,
+      totalLabel: messages.total,
+      total: formatPrice(subtotal, language),
+      paymentTitle: messages.paymentTitle,
+      scanToPay: messages.scanToPay,
+      ownerName: messages.ownerName,
+      ownerAddress: messages.ownerAddress,
+      zalo: messages.zalo,
+      items: cart.map(({ item, size, quantity }, index) => {
+        const localizedItem = localizeMenuItem(item, language)
+        const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
+        return {
+          number: index + 1,
+          name: localizedSize ? `${localizedItem.name} (${localizedSize.name})` : localizedItem.name,
+          quantity,
+          unitPrice: formatPrice(getProductPrice(item, size), language),
+          lineTotal: formatPrice(getProductPrice(item, size) * quantity, language),
+        }
+      }),
+    }
+  }
+
+  async function downloadOrderDocx() {
+    setDocxBusy(true)
+    setDocxError(null)
+    try {
+      const { fillOrderDocumentTemplate } = await import('./utils/order-document')
+      const blob = await fillOrderDocumentTemplate(getOrderDocumentData())
+      const date = new Date()
+      const fileDate = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+      ].join('-')
+      const downloadUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = `don-hang-${fileDate}.docx`
+      document.body.append(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000)
+    } catch (error) {
+      console.error('Failed to generate order DOCX', error)
+      setDocxError(messages.docxExportError)
+    } finally {
+      setDocxBusy(false)
+    }
+  }
+
+  async function exportOrderPdfFromDocx() {
+    const printFrame = document.createElement('iframe')
+    printFrame.title = messages.exportPdfFromDocx
+    printFrame.style.position = 'fixed'
+    printFrame.style.left = '-10000px'
+    printFrame.style.width = '80mm'
+    printFrame.style.height = '150mm'
+    printFrame.style.border = '0'
+    document.body.append(printFrame)
+    const printWindow = printFrame.contentWindow
+    if (!printWindow) {
+      printFrame.remove()
+      setDocxError(messages.docxExportError)
+      return
+    }
+
+    setDocxBusy(true)
+    setDocxError(null)
+    try {
+      const { printOrderDocumentAsPdf } = await import('./utils/order-document')
+      const date = new Date()
+      const fileDate = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+      ].join('-')
+      await printOrderDocumentAsPdf(getOrderDocumentData(), printWindow, `don-hang-${fileDate}`)
+    } catch (error) {
+      printFrame.remove()
+      console.error('Failed to export order DOCX as PDF', error)
+      setDocxError(messages.docxExportError)
+    } finally {
+      setDocxBusy(false)
+    }
   }
 
   function placeOrder() {
@@ -561,9 +658,20 @@ function App() {
               <img src="/payment-qr.png" alt={messages.qrAlt} />
             </section>
             <div className="receipt-actions">
-              <Button onClick={printOrder}>{messages.savePdf}</Button>
+              <Button onClick={downloadOrderDocx} disabled={docxBusy}>
+                {docxBusy ? messages.docxExporting : messages.saveDocx}
+              </Button>
+              <Button onClick={exportOrderPdfFromDocx} disabled={docxBusy}>
+                {docxBusy ? messages.pdfExporting : messages.exportPdfFromDocx}
+              </Button>
+              <Button variant="secondary" onClick={printOrder}>{messages.savePdf}</Button>
               <Button variant="secondary" onClick={() => setReceiptOpen(false)}>{messages.closeReceipt}</Button>
             </div>
+            <p className="docx-hint">{messages.docxHint}</p>
+            <a className="docx-template-link" href="/receipt-template.docx" download>
+              {messages.downloadDocxTemplate}
+            </a>
+            {docxError && <p className="docx-error" role="alert">{docxError}</p>}
           </div>
         </section>
       )}
