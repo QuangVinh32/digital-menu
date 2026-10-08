@@ -767,7 +767,9 @@ function App() {
               <Button onClick={exportOrderPdfFromDocx} disabled={docxBusy}>
                 {docxBusy ? messages.pdfExporting : messages.exportPdfFromDocx}
               </Button>
-              <Button variant="secondary" onClick={closeReceipt}>{messages.closeReceipt}</Button>
+              <Button className="receipt-close-action" variant="secondary" onClick={closeReceipt}>
+                {messages.closeReceipt}
+              </Button>
             </div>
             <p className="docx-hint">{messages.docxHint}</p>
             <a className="docx-template-link" href="/receipt-template.docx" download>
