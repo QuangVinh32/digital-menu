@@ -15,6 +15,61 @@ type CartItem = {
   quantity: number
 }
 
+type BillLine = {
+  name: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
+
+type SavedBill = {
+  id: string
+  code: string
+  createdAt: string
+  total: number
+  items: BillLine[]
+}
+
+const billsStorageKey = 'bep-nha-bills'
+
+function isSavedBill(value: unknown): value is SavedBill {
+  if (typeof value !== 'object' || value === null) return false
+  const bill = value as Record<string, unknown>
+  return (
+    typeof bill.id === 'string' &&
+    typeof bill.code === 'string' &&
+    typeof bill.createdAt === 'string' &&
+    Number.isFinite(bill.total) &&
+    Array.isArray(bill.items) &&
+    bill.items.every((item: unknown) => {
+      if (typeof item !== 'object' || item === null) return false
+      const line = item as Record<string, unknown>
+      return (
+        typeof line.name === 'string' &&
+        Number.isInteger(line.quantity) &&
+        Number.isFinite(line.unitPrice) &&
+        Number.isFinite(line.total)
+      )
+    })
+  )
+}
+
+function readSavedBills(): { bills: SavedBill[]; error: boolean } {
+  try {
+    const storedBills = window.localStorage.getItem(billsStorageKey)
+    if (!storedBills) return { bills: [], error: false }
+
+    const parsed: unknown = JSON.parse(storedBills)
+    if (!Array.isArray(parsed) || !parsed.every(isSavedBill)) {
+      throw new Error('Stored bills have an invalid format')
+    }
+    return { bills: parsed, error: false }
+  } catch (error) {
+    console.error('Failed to read locally saved bills', error)
+    return { bills: [], error: true }
+  }
+}
+
 const languageOptions = [
   { code: 'vi', flag: 'vi', label: 'Tiếng Việt' },
   { code: 'en', flag: 'en', label: 'English' },
@@ -104,6 +159,11 @@ function App() {
   const [isDark, setIsDark] = useState(false)
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [statisticsOpen, setStatisticsOpen] = useState(false)
+  const [activeBill, setActiveBill] = useState<SavedBill | null>(null)
+  const [initialBillData] = useState(readSavedBills)
+  const [savedBills, setSavedBills] = useState<SavedBill[]>(initialBillData.bills)
+  const [billStorageError, setBillStorageError] = useState(initialBillData.error)
   const [docxBusy, setDocxBusy] = useState(false)
   const [docxError, setDocxError] = useState<string | null>(null)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
@@ -143,7 +203,24 @@ function App() {
   const orderDate = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date())
+  }).format(activeBill ? new Date(activeBill.createdAt) : new Date())
+  const now = new Date()
+  const monthlyBills = savedBills.filter((bill) => {
+    const billDate = new Date(bill.createdAt)
+    return billDate.getFullYear() === now.getFullYear() && billDate.getMonth() === now.getMonth()
+  })
+  const monthlyRevenue = monthlyBills.reduce((sum, bill) => sum + bill.total, 0)
+  const totalRevenue = savedBills.reduce((sum, bill) => sum + bill.total, 0)
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(billsStorageKey, JSON.stringify(savedBills))
+      setBillStorageError(false)
+    } catch (error) {
+      console.error('Failed to save bills locally', error)
+      setBillStorageError(true)
+    }
+  }, [savedBills])
 
   useEffect(() => {
     document.documentElement.lang = language
@@ -151,11 +228,16 @@ function App() {
   }, [language, messages.menuTitle])
 
   useEffect(() => {
-    if (!selectedProduct && !receiptOpen && !languageMenuOpen) return
+    if (!selectedProduct && !receiptOpen && !statisticsOpen && !languageMenuOpen) return
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        if (receiptOpen) setReceiptOpen(false)
+        if (receiptOpen) {
+          setReceiptOpen(false)
+          setActiveBill(null)
+          setCart([])
+        }
+        else if (statisticsOpen) setStatisticsOpen(false)
         else if (languageMenuOpen) setLanguageMenuOpen(false)
         else setSelectedProduct(null)
       }
@@ -163,7 +245,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedProduct, receiptOpen, languageMenuOpen])
+  }, [selectedProduct, receiptOpen, statisticsOpen, languageMenuOpen])
 
   useEffect(() => {
     if (!languageMenuOpen) return
@@ -222,9 +304,12 @@ function App() {
   }
 
   function getOrderDocumentData() {
+    if (!activeBill) throw new Error('Cannot export a receipt without an active bill')
+
     return {
       storeName: language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà',
       receiptTitle: messages.receiptTitle,
+      billCode: activeBill.code,
       date: orderDate,
       itemNumberLabel: messages.itemNumber,
       itemNameLabel: messages.itemName,
@@ -232,23 +317,19 @@ function App() {
       unitPriceLabel: messages.unitPrice,
       lineTotalLabel: messages.lineTotal,
       totalLabel: messages.total,
-      total: formatPrice(subtotal, language),
+      total: formatPrice(activeBill.total, language),
       paymentTitle: messages.paymentTitle,
       scanToPay: messages.scanToPay,
       ownerName: messages.ownerName,
       ownerAddress: messages.ownerAddress,
       zalo: messages.zalo,
-      items: cart.map(({ item, size, quantity }, index) => {
-        const localizedItem = localizeMenuItem(item, language)
-        const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
-        return {
-          number: index + 1,
-          name: localizedSize ? `${localizedItem.name} (${localizedSize.name})` : localizedItem.name,
-          quantity,
-          unitPrice: formatPrice(getProductPrice(item, size), language),
-          lineTotal: formatPrice(getProductPrice(item, size) * quantity, language),
-        }
-      }),
+      items: activeBill.items.map((item, index) => ({
+        number: index + 1,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: formatPrice(item.unitPrice, language),
+        lineTotal: formatPrice(item.total, language),
+      })),
     }
   }
 
@@ -267,7 +348,7 @@ function App() {
       const downloadUrl = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = downloadUrl
-      link.download = `don-hang-${fileDate}.docx`
+      link.download = `${activeBill?.code ?? `don-hang-${fileDate}`}.docx`
       document.body.append(link)
       link.click()
       link.remove()
@@ -295,7 +376,7 @@ function App() {
       const downloadUrl = URL.createObjectURL(pdf)
       const link = document.createElement('a')
       link.href = downloadUrl
-      link.download = `don-hang-${fileDate}.pdf`
+      link.download = `${activeBill?.code ?? `don-hang-${fileDate}`}.pdf`
       document.body.append(link)
       link.click()
       link.remove()
@@ -309,10 +390,45 @@ function App() {
   }
 
   function placeOrder() {
+    const createdAt = new Date()
+    const monthCode = [
+      createdAt.getFullYear(),
+      String(createdAt.getMonth() + 1).padStart(2, '0'),
+    ].join('')
+    const monthSequence = savedBills.filter((bill) => bill.code.includes(`-${monthCode}-`)).length + 1
+    const bill: SavedBill = {
+      id: crypto.randomUUID(),
+      code: `BILL-${monthCode}-${String(monthSequence).padStart(4, '0')}`,
+      createdAt: createdAt.toISOString(),
+      total: subtotal,
+      items: cart.map(({ item, size, quantity }) => {
+        const localizedItem = localizeMenuItem(item, language)
+        const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
+        const unitPrice = getProductPrice(item, size)
+        return {
+          name: localizedSize ? `${localizedItem.name} (${localizedSize.name})` : localizedItem.name,
+          quantity,
+          unitPrice,
+          total: unitPrice * quantity,
+        }
+      }),
+    }
+    setSavedBills((current) => [...current, bill])
+    setActiveBill(bill)
     setMobileCartOpen(false)
     setReceiptOpen(true)
   }
 
+  function closeReceipt() {
+    setReceiptOpen(false)
+    setActiveBill(null)
+    setCart([])
+  }
+
+  const statsThisMonthLabel = new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date())
   const cartPanel = (
     <aside className={`cart-panel${mobileCartOpen ? ' cart-panel--open' : ''}`} aria-label={messages.cartTitle}>
       <div className="cart-heading">
@@ -400,6 +516,13 @@ function App() {
             </a>
             <div className="topbar-actions">
               <div className="open-status"><span className="status-dot" /> {messages.openStatus}</div>
+              <button
+                className="statistics-button"
+                type="button"
+                onClick={() => setStatisticsOpen(true)}
+              >
+                {messages.statistics}
+              </button>
               <div className="language-picker" ref={languagePickerRef}>
                 <button
                   className="language-picker-trigger"
@@ -574,14 +697,28 @@ function App() {
           aria-modal="true"
           aria-label={messages.receiptLabel}
           onClick={(event) => {
-            if (event.target === event.currentTarget) setReceiptOpen(false)
+            if (event.target === event.currentTarget) closeReceipt()
           }}
         >
-          <div style={{borderRadius:"0"}} className="receipt-sheet">
+          <div className="receipt-sheet">
             <header className="receipt-header">
+              <button
+                className="receipt-close-button"
+                type="button"
+                aria-label={messages.closeReceipt}
+                onClick={closeReceipt}
+              >
+                <Icon name="close" />
+              </button>
               <h1>{language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà'}</h1>
               <p>{messages.receiptTitle}</p>
               <time>{orderDate}</time>
+              {activeBill && (
+                <>
+                  <p className="receipt-bill-code">{messages.billNumber}: {activeBill.code}</p>
+                  <p className="receipt-bill-guid">{messages.billGuid}: {activeBill.id}</p>
+                </>
+              )}
             </header>
             <table>
               <thead>
@@ -594,25 +731,20 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {cart.map(({ item, size, quantity }, index) => {
-                  const localizedItem = localizeMenuItem(item, language)
-                  const localizedSize = localizedItem.sizes?.find((itemSize) => itemSize.id === size?.id) ?? null
+                {activeBill?.items.map((item, index) => {
                   return (
-                    <tr key={getCartItemKey(item, size)}>
+                    <tr key={`${item.name}-${index}`}>
                       <td data-label={messages.itemNumber}>{index + 1}</td>
-                      <td>
-                        {localizedItem.name}
-                        {localizedSize && <small className="receipt-item-size">{localizedSize.name}</small>}
-                      </td>
-                      <td data-label={messages.quantity}>{quantity}</td>
-                      <td data-label={messages.unitPrice}>{formatPrice(getProductPrice(item, size), language)}</td>
-                      <td data-label={messages.lineTotal}>{formatPrice(getProductPrice(item, size) * quantity, language)}</td>
+                      <td>{item.name}</td>
+                      <td data-label={messages.quantity}>{item.quantity}</td>
+                      <td data-label={messages.unitPrice}>{formatPrice(item.unitPrice, language)}</td>
+                      <td data-label={messages.lineTotal}>{formatPrice(item.total, language)}</td>
                     </tr>
                   )
                 })}
               </tbody>
             </table>
-            <p className="receipt-total"><span>{messages.total}</span><strong>{formatPrice(subtotal, language)}</strong></p>
+            <p className="receipt-total"><span>{messages.total}</span><strong>{formatPrice(activeBill?.total ?? 0, language)}</strong></p>
             <p className="receipt-hint">{messages.screenshotHint}</p>
             <section className="receipt-payment" aria-label={messages.paymentTitle}>
               <div>
@@ -635,13 +767,75 @@ function App() {
               <Button onClick={exportOrderPdfFromDocx} disabled={docxBusy}>
                 {docxBusy ? messages.pdfExporting : messages.exportPdfFromDocx}
               </Button>
-              <Button variant="secondary" onClick={() => setReceiptOpen(false)}>{messages.closeReceipt}</Button>
+              <Button variant="secondary" onClick={closeReceipt}>{messages.closeReceipt}</Button>
             </div>
             <p className="docx-hint">{messages.docxHint}</p>
             <a className="docx-template-link" href="/receipt-template.docx" download>
               {messages.downloadDocxTemplate}
             </a>
             {docxError && <p className="docx-error" role="alert">{docxError}</p>}
+          </div>
+        </section>
+      )}
+      {statisticsOpen && (
+        <section
+          className="receipt-preview is-open"
+          role="dialog"
+          aria-modal="true"
+          aria-label={messages.statistics}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setStatisticsOpen(false)
+          }}
+        >
+          <div className="receipt-sheet statistics-sheet">
+            <header className="receipt-header">
+              <button
+                className="receipt-close-button"
+                type="button"
+                aria-label={messages.closeReceipt}
+                onClick={() => setStatisticsOpen(false)}
+              >
+                <Icon name="close" />
+              </button>
+              <h1>{messages.statistics}</h1>
+              <p>{messages.localStatisticsNotice}</p>
+            </header>
+            {billStorageError && <p className="docx-error" role="alert">{messages.localStorageError}</p>}
+            <div className="statistics-cards">
+              <article className="statistics-card">
+                <span>{messages.billCount}</span>
+                <strong>{savedBills.length}</strong>
+              </article>
+              <article className="statistics-card">
+                <span>{messages.totalRevenue}</span>
+                <strong>{formatPrice(totalRevenue, language)}</strong>
+              </article>
+              <article className="statistics-card">
+                <span>{formatMessage(messages.monthlyBillCount, { month: statsThisMonthLabel })}</span>
+                <strong>{monthlyBills.length}</strong>
+              </article>
+              <article className="statistics-card">
+                <span>{messages.monthlyRevenue}</span>
+                <strong>{formatPrice(monthlyRevenue, language)}</strong>
+              </article>
+            </div>
+            <h2 className="statistics-history-title">{messages.billHistory}</h2>
+            {savedBills.length === 0 ? (
+              <p className="statistics-empty">{messages.noBillsYet}</p>
+            ) : (
+              <div className="statistics-history">
+                {[...savedBills].reverse().map((bill) => (
+                  <article className="statistics-bill" key={bill.id}>
+                    <div>
+                      <strong>{bill.code}</strong>
+                      <time>{new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(bill.createdAt))}</time>
+                      <small>{messages.billGuid}: {bill.id}</small>
+                    </div>
+                    <strong>{formatPrice(bill.total, language)}</strong>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}

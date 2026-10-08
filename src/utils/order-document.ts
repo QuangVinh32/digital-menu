@@ -12,6 +12,7 @@ export type OrderDocumentLine = {
 export type OrderDocumentData = {
   storeName: string
   receiptTitle: string
+  billCode: string
   date: string
   itemNumberLabel: string
   itemNameLabel: string

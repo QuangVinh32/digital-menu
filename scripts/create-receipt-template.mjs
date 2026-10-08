@@ -129,6 +129,11 @@ const card = new Table({
                 new TextRun({ text: '   {date}', size: 15, color: '60656B' }),
               ],
             }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 100 },
+              children: [new TextRun({ text: '{billCode}', bold: true, size: 16, color: '39452F' })],
+            }),
             itemTable,
             new Paragraph({
               alignment: AlignmentType.RIGHT,
