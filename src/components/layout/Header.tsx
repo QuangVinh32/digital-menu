@@ -60,7 +60,7 @@ export function Header({
   onLanguageMenuToggle,
   onLanguageChange,
   onThemeToggle,
-  onStatisticsOpen,
+  // onStatisticsOpen,
   onCartOpen,
 }: HeaderProps) {
   return (
