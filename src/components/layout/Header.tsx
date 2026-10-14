@@ -68,9 +68,11 @@ export function Header({
       <a className="brand" href="#" aria-label={messages.homeLabel}>
         <span className="brand-mark"><Icon name="leaf" size={22} /></span>
         <span className="brand-name">
-          {language === 'ja' ? 'ベップ' : language === 'en' ? 'bep' : 'bếp'}
-          <span>{language === 'ja' ? 'ニャー' : language === 'en' ? 'nha' : 'nhà'}</span>
-          <small>{language === 'ja' ? '新鮮で地元の食材' : 'FRESH & LOCAL'}</small>
+          <span className="brand-main">
+            <span className="brand-word brand-word--king">KING</span>
+            <span className="brand-word brand-word--tea">TEA</span>
+          </span>
+          <small>DRINKS & SNACKS</small>
         </span>
       </a>
       <div className="topbar-actions">

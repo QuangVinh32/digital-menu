@@ -17,6 +17,7 @@ export type MenuItem = {
   sizes?: ProductSize[]
   image: string
   categoryId: string
+  subCategoryId?: string
   available: boolean
   discountPercent?: number
   tags?: string[]

@@ -197,16 +197,30 @@ select:focus-visible {
 .brand-name {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 21px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 0.9;
 }
 
-.brand-name > span {
-  display: inline;
-  margin-left: 36px;
-  margin-top: -21px;
+.brand-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.brand-word {
+  display: inline-block;
+  font-size: clamp(23px, 2vw, 34px);
+  letter-spacing: 0.04em;
+}
+
+.brand-word--king {
+  color: #0d4d4c;
+}
+
+.brand-word--tea {
   color: var(--accent);
 }
 
@@ -555,15 +569,23 @@ select:focus-visible {
 
 .menu-controls {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 21px;
+}
+
+.menu-toolbar {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 21px;
+  min-height: 40px;
 }
 
 .category-list {
   display: flex;
   min-width: 0;
+  flex: 1 1 auto;
   align-items: center;
   gap: 7px;
   overflow-x: auto;
@@ -595,6 +617,56 @@ select:focus-visible {
 .category-button.is-active {
   color: white;
   background: var(--accent);
+}
+
+.subcategory-shell {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+}
+
+.subcategory-placeholder {
+  width: 100%;
+  min-height: 38px;
+}
+
+.subcategory-list {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 38px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subcategory-list::-webkit-scrollbar {
+  display: none;
+}
+
+.subcategory-button {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.subcategory-button:hover {
+  color: var(--accent-dark);
+  border-color: rgb(42 86 72 / 30%);
+  background: var(--accent-pale);
+}
+
+.subcategory-button.is-active {
+  color: var(--accent-dark);
+  background: rgb(42 86 72 / 10%);
+  border-color: rgb(42 86 72 / 30%);
 }
 
 .search-box {
@@ -751,7 +823,7 @@ select:focus-visible {
 .product-title-row h3 {
   overflow: hidden;
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -906,7 +978,7 @@ select:focus-visible {
 .product-modal-title-row h2 {
   margin: 0;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 27px;
+  font-size: 30px;
   font-weight: 600;
   line-height: 1.25;
 }
@@ -969,28 +1041,36 @@ select:focus-visible {
 
 .product-size-option {
   display: flex;
-  min-height: 38px;
+  min-height: 48px;
+  flex: 1 1 120px;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   gap: 3px;
-  padding: 6px 10px;
+  padding: 10px 12px;
   color: var(--text);
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-muted) 100%);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 10px;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.product-size-option:hover {
+  transform: translateY(-1px);
+  border-color: rgb(42 86 72 / 42%);
 }
 
 .product-size-option strong {
-  color: var(--text-muted);
+  color: var(--accent-dark);
   font-size: 9px;
 }
 
 .product-size-option.is-selected {
-  background: var(--surface-muted);
+  background: linear-gradient(180deg, rgb(42 86 72 / 10%) 0%, rgb(42 86 72 / 4%) 100%);
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  box-shadow: 0 0 0 1px rgb(42 86 72 / 24%);
 }
 
 .product-facts {
@@ -1987,10 +2067,7 @@ select:focus-visible {
 }
 
 .receipt-payment {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  display: block;
   padding: 14px;
   margin-top: 14px;
   background: #f5f7f8;
@@ -2023,16 +2100,11 @@ select:focus-visible {
 }
 
 .receipt-payment a {
+  display: block;
+  width: fit-content;
   color: #2457a7;
   font-size: 12px;
   font-weight: 700;
-}
-
-.receipt-payment img {
-  display: block;
-  width: 132px;
-  height: auto;
-  flex: 0 0 auto;
 }
 
 @media (max-width: 580px) {
@@ -2119,7 +2191,6 @@ select:focus-visible {
   }
 
   .receipt-payment {
-    gap: 8px;
     padding: 9px;
   }
 
@@ -2141,10 +2212,6 @@ select:focus-visible {
 
   .receipt-payment a {
     font-size: 10px;
-  }
-
-  .receipt-payment img {
-    width: 112px;
   }
 
   .receipt-actions {
@@ -2314,8 +2381,6 @@ select:focus-visible {
   }
 
   .receipt-payment {
-    align-items: center;
-    gap: 12px;
     padding: 12px;
     margin-top: 12px;
     border-radius: 12px;
@@ -2347,10 +2412,6 @@ select:focus-visible {
 
   .receipt-payment a {
     font-size: 11px;
-  }
-
-  .receipt-payment img {
-    width: clamp(88px, 28vw, 120px);
   }
 
   .receipt-actions {

@@ -8,13 +8,16 @@ import { ProductCard } from './ProductCard'
 
 type MenuSectionProps = {
   categories: MenuCategory[]
+  subCategories: { id: string; name: string }[]
   items: MenuItem[]
   cart: CartItem[]
   activeCategory: string
+  activeSubCategory: string
   search: string
   language: Language
   messages: Messages
   onCategoryChange: (categoryId: string) => void
+  onSubCategoryChange: (subCategoryId: string) => void
   onSearchChange: (value: string) => void
   onAdd: (item: MenuItem) => void
   onDetails: (item: MenuItem) => void
@@ -23,13 +26,16 @@ type MenuSectionProps = {
 
 export function MenuSection({
   categories,
+  subCategories,
   items,
   cart,
   activeCategory,
+  activeSubCategory,
   search,
   language,
   messages,
   onCategoryChange,
+  onSubCategoryChange,
   onSearchChange,
   onAdd,
   onDetails,
@@ -46,33 +52,55 @@ export function MenuSection({
       </div>
 
       <div className="menu-controls">
-        <div className="category-list" role="group" aria-label={messages.categoryFilter}>
-          {categories.map((category) => (
-            <button
-              className={`category-button${activeCategory === category.id ? ' is-active' : ''}`}
-              type="button"
-              key={category.id}
-              aria-pressed={activeCategory === category.id}
-              onClick={() => onCategoryChange(category.id)}
-            >
-              {category.name}
-            </button>
-          ))}
+        <div className="menu-toolbar">
+          <div className="category-list" role="group" aria-label={messages.categoryFilter}>
+            {categories.map((category) => (
+              <button
+                className={`category-button${activeCategory === category.id ? ' is-active' : ''}`}
+                type="button"
+                key={category.id}
+                aria-pressed={activeCategory === category.id}
+                onClick={() => onCategoryChange(category.id)}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+          <label className="search-box">
+            <Icon name="search" size={18} />
+            <Input
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder={messages.searchPlaceholder}
+              aria-label={messages.searchLabel}
+            />
+            {search && (
+              <button type="button" aria-label={messages.clearSearch} onClick={() => onSearchChange('')}>
+                <Icon name="close" size={16} />
+              </button>
+            )}
+          </label>
         </div>
-        <label className="search-box">
-          <Icon name="search" size={18} />
-          <Input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder={messages.searchPlaceholder}
-            aria-label={messages.searchLabel}
-          />
-          {search && (
-            <button type="button" aria-label={messages.clearSearch} onClick={() => onSearchChange('')}>
-              <Icon name="close" size={16} />
-            </button>
+
+        <div className={`subcategory-shell${subCategories.length > 1 ? ' is-visible' : ''}`}>
+          {subCategories.length > 1 ? (
+            <div className="subcategory-list" role="group" aria-label="Phân loại con">
+              {subCategories.map((subCategory) => (
+                <button
+                  className={`subcategory-button${activeSubCategory === subCategory.id ? ' is-active' : ''}`}
+                  type="button"
+                  key={subCategory.id}
+                  aria-pressed={activeSubCategory === subCategory.id}
+                  onClick={() => onSubCategoryChange(subCategory.id)}
+                >
+                  {subCategory.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="subcategory-placeholder" aria-hidden="true" />
           )}
-        </label>
+        </div>
       </div>
 
       {items.length > 0 ? (

@@ -10,7 +10,7 @@ export function HeroSection({ messages }: { messages: Messages }) {
         <h1>{messages.heroTitleStart}<br />{messages.heroTitleEnd} <em>{messages.heroTitleEmphasis}</em></h1>
         <p>{messages.heroDescription}</p>
         <div className="hero-details">
-          <span><Icon name="clock" size={16} /> 08:00 – 21:30</span>
+          <span><Icon name="leaf" size={16} /> {messages.heroOffering}</span>
           <span className="detail-divider" />
           <span><Icon name="leaf" size={16} /> {messages.freshIngredients}</span>
         </div>

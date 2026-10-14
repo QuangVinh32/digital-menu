@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MenuItem, ProductSize } from './types/menu'
 import type { CartItem } from './types/cart'
-import { categories, menuItems } from './data/menu'
+import { categories, menuItems, subCategoriesByParent } from './data/menu'
 import { Button } from './components/ui/Button'
 import { Icon } from './components/ui/Icon'
 import { Header } from './components/layout/Header'
@@ -73,6 +73,7 @@ function readSavedBills(): { bills: SavedBill[]; error: boolean } {
 function App() {
   const [language, setLanguage] = useState<Language>('vi')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [activeSubCategory, setActiveSubCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [isDark, setIsDark] = useState(false)
@@ -98,24 +99,39 @@ function App() {
     ...category,
     name: {
       all: messages.categoryAll,
-      'mon-chinh': messages.categoryMain,
-      'mon-nhe': messages.categorySnack,
       'do-uong': messages.categoryDrink,
+      'ca-phe': messages.categoryCoffee,
+      'tra-sua': messages.categoryMilkTea,
+      'tra-trai-cay': messages.categoryFruitTea,
+      'sua-tuoi': 'Sữa tươi',
+      'da-xay': 'Đá xay',
+      'sinh-to': messages.categorySmoothie,
+      soda: 'Soda',
+      'mon-an-vat': messages.categorySnack,
+      'my-cay': 'Mỳ cay',
       'trang-mieng': messages.categoryDessert,
+      'tau-hu': 'Tàu hũ',
+      kem: 'Kem',
+      che: 'Chè',
+      topping: messages.categoryTopping,
     }[category.id] ?? category.name,
   }))
+
+  const activeSubCategories = subCategoriesByParent[activeCategory as keyof typeof subCategoriesByParent] ?? subCategoriesByParent.all
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLocaleLowerCase(locale)
     return localizedItems.filter((item) => {
       const matchesCategory = activeCategory === 'all' || item.categoryId === activeCategory
+      const matchesSubCategory =
+        activeSubCategory === 'all' || item.subCategoryId === activeSubCategory || (!item.subCategoryId && activeSubCategory === 'all')
       const matchesSearch =
         !query ||
         item.name.toLocaleLowerCase(locale).includes(query) ||
         item.description.toLocaleLowerCase(locale).includes(query)
-      return matchesCategory && matchesSearch && item.available
+      return matchesCategory && matchesSubCategory && matchesSearch && item.available
     })
-  }, [activeCategory, localizedItems, locale, search])
+  }, [activeCategory, activeSubCategory, localizedItems, locale, search])
 
   const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
   const subtotal = cart.reduce((sum, entry) => sum + getProductPrice(entry.item, entry.size) * entry.quantity, 0)
@@ -143,7 +159,7 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = language
-    document.title = `Bếp Nhà | ${messages.menuTitle}`
+    document.title = `King Tea | ${messages.menuTitle}`
   }, [language, messages.menuTitle])
 
   useEffect(() => {
@@ -222,7 +238,7 @@ function App() {
     if (!activeBill) throw new Error('Cannot export a receipt without an active bill')
 
     return {
-      storeName: language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà',
+      storeName: 'King Tea',
       receiptTitle: messages.receiptTitle,
       billCode: activeBill.code,
       date: orderDate,
@@ -237,7 +253,7 @@ function App() {
       scanToPay: messages.scanToPay,
       ownerName: messages.ownerName,
       ownerAddress: messages.ownerAddress,
-      zalo: messages.zalo,
+      zalo: messages.phone,
       items: activeBill.items.map((item, index) => ({
         number: index + 1,
         name: item.name,
@@ -370,19 +386,45 @@ function App() {
             <HeroSection messages={messages} />
             <MenuSection
               categories={localizedCategories}
+              subCategories={activeSubCategories.map((subCategory) => ({
+                ...subCategory,
+                name: {
+                  all: messages.categoryAll,
+                  'tra-sua': messages.categoryMilkTea,
+                  'tra-trai-cay': messages.categoryFruitTea,
+                  'sua-tuoi': 'Sữa tươi',
+                  'da-xay': 'Đá xay',
+                  'sinh-to': messages.categorySmoothie,
+                  soda: 'Soda',
+                  'ca-phe': messages.categoryCoffee,
+                  kem: 'Kem',
+                  'tau-hu': 'Tàu hũ',
+                  che: 'Chè',
+                  'an-vat': 'Ăn vặt',
+                  'banh-trang': 'Bánh tráng',
+                  'xuc-xich': 'Xúc xích',
+                  'my-cay': 'Mỳ cay',
+                }[subCategory.id] ?? subCategory.name,
+              }))}
               items={filteredItems}
               cart={cart}
               activeCategory={activeCategory}
+              activeSubCategory={activeSubCategory}
               search={search}
               language={language}
               messages={messages}
-              onCategoryChange={setActiveCategory}
+              onCategoryChange={(nextCategory) => {
+                setActiveCategory(nextCategory)
+                setActiveSubCategory('all')
+              }}
+              onSubCategoryChange={setActiveSubCategory}
               onSearchChange={setSearch}
               onAdd={handleAddClick}
               onDetails={handleDetails}
               onShowAll={() => {
                 setSearch('')
                 setActiveCategory('all')
+                setActiveSubCategory('all')
               }}
             />
             <Footer messages={messages} />
@@ -431,7 +473,7 @@ function App() {
               >
                 <Icon name="close" />
               </button>
-              <h1>{language === 'ja' ? 'ベップ・ニャー' : language === 'en' ? 'Bep Nha' : 'Bếp Nhà'}</h1>
+              <h1>King Tea</h1>
               <p>{messages.receiptTitle}</p>
               <time>{orderDate}</time>
               {activeBill && (
@@ -475,11 +517,9 @@ function App() {
                   <strong>{messages.ownerName}</strong>
                   <address>{messages.ownerAddress}</address>
                 </div>
-                <a href="https://zalo.me/0357700838" target="_blank" rel="noreferrer">
-                  {messages.zalo}
-                </a>
+                <a href="tel:+84367227112">{messages.phone}</a>
+                <a href="tel:+84355598896">{messages.footerPhoneTwo}</a>
               </div>
-              <img src="/payment-qr.png" alt={messages.qrAlt} />
             </section>
             <div className="receipt-actions">
               <Button onClick={downloadOrderDocx} disabled={docxBusy}>
