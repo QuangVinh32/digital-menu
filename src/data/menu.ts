@@ -3,7 +3,6 @@ import type { MenuCategory, MenuItem } from '../types/menu'
 export const categories: MenuCategory[] = [
   { id: 'all', name: 'Tất cả' },
   { id: 'do-uong', name: 'Đồ uống' },
-  { id: 'ca-phe', name: 'Cà phê' },
   { id: 'trang-mieng', name: 'Tráng miệng' },
   { id: 'mon-an-vat', name: 'Món ăn vặt' },
 ]
@@ -12,6 +11,7 @@ export const subCategoriesByParent = {
   all: [{ id: 'all', name: 'Tất cả' }],
   'do-uong': [
     { id: 'all', name: 'Tất cả' },
+    { id: 'ca-phe', name: 'Cà phê' },
     { id: 'tra-sua', name: 'Trà sữa' },
     { id: 'tra-trai-cay', name: 'Trà trái cây' },
     { id: 'sua-tuoi', name: 'Sữa tươi' },
@@ -19,7 +19,6 @@ export const subCategoriesByParent = {
     { id: 'sinh-to', name: 'Sinh tố' },
     { id: 'soda', name: 'Soda' },
   ],
-  'ca-phe': [{ id: 'all', name: 'Tất cả' }, { id: 'ca-phe', name: 'Cà phê' }],
   'trang-mieng': [
     { id: 'all', name: 'Tất cả' },
     { id: 'tau-hu', name: 'Tàu hũ' },
@@ -56,6 +55,7 @@ type MenuSize = {
 
 type MenuGroup = {
   categoryId: string
+  idPrefix?: string
   image: string
   description: string
   items: readonly {
@@ -104,7 +104,8 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    categoryId: 'ca-phe',
+    categoryId: 'do-uong',
+    idPrefix: 'ca-phe',
     image: images.coffee,
     description: 'Cà phê và thức uống cà phê đặc trưng King Tea.',
     items: [
@@ -148,7 +149,7 @@ const menuGroups: MenuGroup[] = [
 
 export const menuItems: MenuItem[] = menuGroups.flatMap((group) =>
   group.items.map((item) => ({
-    id: normalizeProductName(`${group.categoryId}-${item.name}`),
+    id: normalizeProductName(`${group.idPrefix ?? group.categoryId}-${item.name}`),
     name: item.name,
     description: item.description ?? group.description,
     price: item.sizes[0]?.price ?? 0,
