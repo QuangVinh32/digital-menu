@@ -596,7 +596,8 @@ select:focus-visible {
   display: none;
 }
 
-.category-button {
+.category-button,
+.subcategory-button {
   flex: 0 0 auto;
   padding: 9px 14px;
   color: var(--text-muted);
@@ -609,12 +610,14 @@ select:focus-visible {
   transition: color 160ms ease, background-color 160ms ease;
 }
 
-.category-button:hover {
+.category-button:hover,
+.subcategory-button:hover {
   color: var(--accent-dark);
   background: var(--accent-pale);
 }
 
-.category-button.is-active {
+.category-button.is-active,
+.subcategory-button.is-active {
   color: white;
   background: var(--accent);
 }
@@ -642,31 +645,6 @@ select:focus-visible {
 
 .subcategory-list::-webkit-scrollbar {
   display: none;
-}
-
-.subcategory-button {
-  flex: 0 0 auto;
-  padding: 7px 12px;
-  color: var(--text-muted);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: 600;
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
-}
-
-.subcategory-button:hover {
-  color: var(--accent-dark);
-  border-color: rgb(42 86 72 / 30%);
-  background: var(--accent-pale);
-}
-
-.subcategory-button.is-active {
-  color: var(--accent-dark);
-  background: rgb(42 86 72 / 10%);
-  border-color: rgb(42 86 72 / 30%);
 }
 
 .search-box {
@@ -1801,9 +1779,15 @@ select:focus-visible {
 
   .menu-controls {
     align-items: stretch;
-    flex-direction: column-reverse;
+    flex-direction: column;
     gap: 10px;
     margin-bottom: 16px;
+  }
+
+  .menu-toolbar {
+    align-items: stretch;
+    flex-direction: column-reverse;
+    gap: 10px;
   }
 
   .search-box {
@@ -1811,11 +1795,13 @@ select:focus-visible {
   }
 
   .category-list {
+    width: 100%;
     margin: 0 -16px;
     padding: 0 16px;
   }
 
-  .category-button {
+  .category-button,
+  .subcategory-button {
     padding: 8px 12px;
     font-size: 10px;
   }

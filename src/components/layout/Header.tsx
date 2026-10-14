@@ -77,9 +77,9 @@ export function Header({
       </a>
       <div className="topbar-actions">
         <div className="open-status"><span className="status-dot" /> {messages.openStatus}</div>
-        <button className="statistics-button" type="button" onClick={onStatisticsOpen}>
+        {/* <button className="statistics-button" type="button" onClick={onStatisticsOpen}>
           {messages.statistics}
-        </button>
+        </button> */}
         <div className="language-picker" ref={languagePickerRef}>
           <button
             className="language-picker-trigger"
